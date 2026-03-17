@@ -1,0 +1,29 @@
+{
+  "case": "rms7_plus_feat4",
+  "time": "2026-03-17 16:20",
+  "n_features": 8,
+  "train_points": 630,
+  "test_points": 315,
+  "pca_explained_ratio_sum": 0.9607300162315369,
+  "mmd_rbf_train_vs_test": 0.3995491862297058,
+  "coral_train_vs_test": 632.4354248046875,
+  "overall_domain_auc_train_vs_test": 1.0,
+  "top3_single_feature_domain_auc": [
+    {
+      "feature": "Feat_19",
+      "domain_auc_train_vs_test": 0.9195616024187454
+    },
+    {
+      "feature": "Feat_23",
+      "domain_auc_train_vs_test": 0.80623330813807
+    },
+    {
+      "feature": "Feat_15",
+      "domain_auc_train_vs_test": 0.7324061476442429
+    }
+  ],
+  "wear_bin_thresholds_train_q33_q67": [
+    94.5686264038086,
+    116.73503367106119
+  ]
+}

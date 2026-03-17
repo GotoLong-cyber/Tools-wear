@@ -1,0 +1,41 @@
+stage: "14"
+mode: "single_channel_plus1"
+status: "plan_only"
+
+base_feature_set:
+  name: "rms7_plus_feat4"
+  features:
+    - "Feat_3"
+    - "Feat_4"
+    - "Feat_7"
+    - "Feat_11"
+    - "Feat_15"
+    - "Feat_19"
+    - "Feat_23"
+    - "Feat_27"
+
+candidate_queue_order:
+  - "Feat_8"
+  - "Feat_10"
+  - "Feat_12"
+  - "Feat_16"
+  - "Feat_18"
+  - "Feat_20"
+  - "Feat_22"
+  - "Feat_24"
+  - "Feat_28"
+
+evaluation_gate:
+  fold_inner_bidirectional:
+    both_not_worse_than_baseline_b: true
+    one_direction_improve_at_least_pct: 2.0
+  fold_outer_threefold:
+    hardest_fold_not_worse: true
+    average_mae_improve: true
+    at_least_two_folds_better: true
+    worst_fold_degrade_pct_max: 5.0
+
+leakage_guard:
+  test_run_in_fit: false
+  test_run_in_threshold_selection: false
+  test_run_in_feature_ranking: false

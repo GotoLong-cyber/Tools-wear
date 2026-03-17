@@ -1,0 +1,16 @@
+{
+  "train_runs": [
+    "c1",
+    "c4"
+  ],
+  "n_features_all": 28,
+  "n_features_keep": 17,
+  "n_drop": 11,
+  "params": {
+    "shift_sigma_thr": 2.0,
+    "corr_std_thr": 0.35,
+    "corr_sign_eps": 0.05,
+    "corr_redundancy_thr": 0.98,
+    "score_shift_weight": 0.1
+  }
+}

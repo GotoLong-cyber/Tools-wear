@@ -1,0 +1,50 @@
+{
+  "train_runs": [
+    "c1",
+    "c4"
+  ],
+  "export_runs": [
+    "c1",
+    "c4",
+    "c6"
+  ],
+  "splits": [
+    {
+      "val_run": "c1",
+      "train_runs": [
+        "c4"
+      ]
+    },
+    {
+      "val_run": "c4",
+      "train_runs": [
+        "c1"
+      ]
+    }
+  ],
+  "n_features_in": 17,
+  "k_list": [
+    6,
+    8,
+    10
+  ],
+  "weights": {
+    "w_lin": 0.5,
+    "w_tree": 0.3,
+    "w_rfe": 0.2,
+    "w_stability": 0.3
+  },
+  "strict_inductive_note": "ranking fitted by train_runs only; export_runs may include test_run for column export only",
+  "top10": [
+    "Feat_4",
+    "Feat_22",
+    "Feat_7",
+    "Feat_18",
+    "Feat_10",
+    "Feat_3",
+    "Feat_20",
+    "Feat_8",
+    "Feat_24",
+    "Feat_16"
+  ]
+}

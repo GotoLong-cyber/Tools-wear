@@ -1,0 +1,28 @@
+project: "feature_alignment_diagnosis"
+mode: "plan_only"
+
+fold:
+  train_runs: ["c1", "c4"]
+  val_run: "c4"
+  test_run: "c6"
+
+visualization:
+  primary_embedding: "pca"
+  aux_embedding: "umap"
+  umap_enabled: true
+
+wear_bins:
+  method: "train_quantile"
+  quantiles: [0.33, 0.66]
+  fit_on: "train_only"
+
+metrics:
+  compute_mmd: true
+  compute_coral: true
+  compute_domain_auc_single_feature: true
+  compute_domain_auc_global_feature_set: true
+
+leakage_guard:
+  test_run_used_for_fitting: false
+  test_run_used_for_thresholds: false
+  test_run_used_for_ranking: false
