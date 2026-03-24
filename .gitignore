@@ -138,3 +138,13 @@ dmypy.json
 /checkpoints/
 /test_results/
 checkpoint.pth
+
+# Training artifacts and experiment outputs
+/checkpoint/
+/results/
+/feature_alignment_diagnosis/outputs/
+/figures/
+result_long_term_forecast.txt
+
+# Local backups / scratch
+scripts/timer_xl_133.sh.bak_stageC_20260310
