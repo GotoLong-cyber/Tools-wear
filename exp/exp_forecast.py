@@ -615,7 +615,10 @@ class Exp_Forecast(Exp_Basic):
         preds_wear_list = []
         trues_wear_list = []
 
-        folder_path = './test_results/' + setting + '/'
+        results_subdir = str(getattr(self.args, "results_subdir", "")).strip()
+        results_root = os.path.join("./results", results_subdir) if results_subdir else "./results"
+        save_dir = os.path.join(results_root, setting)
+        folder_path = os.path.join(save_dir, "window_pdfs")
         os.makedirs(folder_path, exist_ok=True)
 
         time_now = time.time()
@@ -753,7 +756,6 @@ class Exp_Forecast(Exp_Basic):
 
         # ========= plot one window =========
         sample_id = 0
-        save_dir = os.path.join("./results", setting)
         os.makedirs(save_dir, exist_ok=True)
 
         plt.figure()
@@ -770,7 +772,7 @@ class Exp_Forecast(Exp_Basic):
         # ==========================================
         # (2) Full-curve reconstruction from windows
         # ==========================================
-        index_map = test_data.index_map  # list of (fn, s_begin)
+        index_map = test_data.index_map  # list of (fn, s_begin) or (fn, s_begin, stride)
         seq_len_plot = int(getattr(self.args, "test_seq_len", getattr(self.args, "seq_len", 96)))
         H_plot = int(preds_inv.shape[1])
 
@@ -780,8 +782,13 @@ class Exp_Forecast(Exp_Basic):
         pred_bucket = [[] for _ in range(L)]
         true_bucket = [[] for _ in range(L)]
 
-        for ii, (fn, s_begin) in enumerate(index_map):
-            base_t = int(s_begin) + seq_len_plot
+        for ii, item in enumerate(index_map):
+            if len(item) == 2:
+                fn, s_begin = item
+                stride = 1
+            else:
+                fn, s_begin, stride = item
+            base_t = int(s_begin) + (seq_len_plot - 1) * int(stride) + 1
             for k in range(H_plot):
                 t = base_t + k
                 if 0 <= t < L:

@@ -789,6 +789,14 @@ class PHM_MergedMultivariateNpy(Dataset):
         wear_csv_suffix="_wear.csv",
         wear_agg="max",                # "max" | "mean" | or a column name in csv
         mask_future_features_in_y=False,  # ✅ 可选：把 seq_y 里除wear外的特征置0，避免未来协变量被误用
+        train_stride_candidates="1",
+        train_stride_quantiles="",
+        train_stride_use_monotonic_wear=True,
+        train_stride_policy="slope",
+        train_stride_random_seed=2026,
+        train_window_weight_policy="none",
+        train_window_weight_quantile=0.5,
+        train_window_weight_seed=2026,
         **kwargs,
     ):
         assert flag in ["train", "val", "test"]
@@ -820,6 +828,26 @@ class PHM_MergedMultivariateNpy(Dataset):
         self.wear_csv_suffix = wear_csv_suffix
         self.wear_agg = wear_agg
         self.mask_future_features_in_y = bool(mask_future_features_in_y)
+        self.train_stride_candidates = self._parse_int_list(train_stride_candidates, [1])
+        if 1 not in self.train_stride_candidates:
+            self.train_stride_candidates = [1] + self.train_stride_candidates
+        self.train_stride_candidates = sorted(set([s for s in self.train_stride_candidates if s >= 1]))
+        self.train_stride_quantiles = self._parse_float_list(train_stride_quantiles, [])
+        self.train_stride_use_monotonic_wear = bool(train_stride_use_monotonic_wear)
+        self.train_stride_policy = str(train_stride_policy).strip().lower()
+        if self.train_stride_policy not in {"slope", "random"}:
+            print(f"[PHM-A2] unknown train_stride_policy={train_stride_policy}; fallback to slope")
+            self.train_stride_policy = "slope"
+        self.train_stride_random_seed = int(train_stride_random_seed)
+        self.train_window_weight_policy = str(train_window_weight_policy).strip().lower()
+        if self.train_window_weight_policy not in {"none", "stage_weight_only"}:
+            print(f"[PHM-A2] unknown train_window_weight_policy={train_window_weight_policy}; fallback to none")
+            self.train_window_weight_policy = "none"
+        self.train_window_weight_quantile = float(train_window_weight_quantile)
+        self.train_window_weight_seed = int(train_window_weight_seed)
+        if any(s > 1 for s in self.train_stride_candidates) and (not self.nonautoregressive):
+            print("[PHM-A2] stride augmentation only supports nonautoregressive mode; fallback to stride=1")
+            self.train_stride_candidates = [1]
 
         self.runs = self.train_runs if self.flag in ["train", "val"] else self.test_runs
 
@@ -844,6 +872,28 @@ class PHM_MergedMultivariateNpy(Dataset):
             print(f"[CorrPrune] keep_features_path={self.keep_features_path} keep_X_cols={len(self.keep_feat_idx)}")
 
         self._read_data_and_build_index()
+
+    @staticmethod
+    def _parse_int_list(value, default):
+        if value is None:
+            return list(default)
+        if isinstance(value, (list, tuple)):
+            return [int(v) for v in value]
+        text = str(value).strip()
+        if not text:
+            return list(default)
+        return [int(v.strip()) for v in text.split(",") if v.strip()]
+
+    @staticmethod
+    def _parse_float_list(value, default):
+        if value is None:
+            return list(default)
+        if isinstance(value, (list, tuple)):
+            return [float(v) for v in value]
+        text = str(value).strip()
+        if not text:
+            return list(default)
+        return [float(v.strip()) for v in text.split(",") if v.strip()]
 
     def _resolve_base_dir(self) -> str:
         base_dir = self.root_path
@@ -923,6 +973,225 @@ class PHM_MergedMultivariateNpy(Dataset):
     def _num_windows(self, T: int) -> int:
         return T - self.seq_len - self.output_token_len + 1
 
+    def _window_fits(self, T: int, s_begin: int, stride: int) -> bool:
+        last_x = s_begin + (self.seq_len - 1) * stride
+        return (last_x + self.output_token_len) < T
+
+    def _default_stride_quantiles(self, n_extra: int):
+        if n_extra <= 0:
+            return []
+        if n_extra == 1:
+            return [0.5]
+        return np.linspace(0.5, 0.25, num=n_extra).tolist()
+
+    def _prepare_train_stride_policy(self):
+        self.train_hist_slope = {}
+        self.train_stride_thresholds = {}
+        self.train_random_allowed = {}
+        self.train_stride_target_starts = {}
+
+        extra_strides = [s for s in self.train_stride_candidates if s > 1]
+        if self.flag != "train" or not extra_strides:
+            return
+
+        slope_values = []
+        for run in self.train_runs:
+            y = self.raw_wear_um[run].astype(np.float64)
+            if self.train_stride_use_monotonic_wear:
+                y = np.maximum.accumulate(y)
+
+            T = len(y)
+            n = self._num_windows(T)
+            n_train = max(int(np.floor(n * self.split_ratio)), 1)
+
+            run_slopes = {}
+            for s_begin in range(0, n_train):
+                last_hist = s_begin + self.seq_len - 1
+                slope = float((y[last_hist] - y[s_begin]) / max(self.seq_len - 1, 1))
+                run_slopes[s_begin] = slope
+                slope_values.append(slope)
+            self.train_hist_slope[run] = run_slopes
+
+        if not slope_values:
+            return
+
+        quantiles = self.train_stride_quantiles
+        if len(quantiles) != len(extra_strides):
+            quantiles = self._default_stride_quantiles(len(extra_strides))
+
+        for stride, q in zip(extra_strides, quantiles):
+            self.train_stride_thresholds[stride] = float(np.quantile(slope_values, q))
+
+        print(
+            "[PHM-A2] train stride candidates={} thresholds={}".format(
+                self.train_stride_candidates,
+                {k: round(v, 6) for k, v in self.train_stride_thresholds.items()},
+            )
+        )
+
+        for run in self.train_runs:
+            y = self.raw_wear_um[run].astype(np.float64)
+            T = len(y)
+            n = self._num_windows(T)
+            n_train = max(int(np.floor(n * self.split_ratio)), 1)
+            per_run = {}
+            for stride in extra_strides:
+                thr = self.train_stride_thresholds.get(stride, None)
+                if thr is None:
+                    continue
+                target_starts = []
+                for s_begin in range(0, n_train):
+                    if not self._window_fits(T, s_begin, stride):
+                        continue
+                    slope = self.train_hist_slope.get(run, {}).get(s_begin, None)
+                    if slope is not None and slope <= thr:
+                        target_starts.append(s_begin)
+                per_run[stride] = target_starts
+            self.train_stride_target_starts[run] = per_run
+
+        if self.train_stride_policy == "random":
+            rng = np.random.default_rng(self.train_stride_random_seed + self.split_seed)
+            random_count_by_stride = {s: 0 for s in extra_strides}
+            target_count_by_stride = {s: 0 for s in extra_strides}
+
+            for run in self.train_runs:
+                y = self.raw_wear_um[run].astype(np.float64)
+                T = len(y)
+                n = self._num_windows(T)
+                n_train = max(int(np.floor(n * self.split_ratio)), 1)
+                run_random = {}
+
+                for stride in extra_strides:
+                    thr = self.train_stride_thresholds.get(stride, None)
+                    if thr is None:
+                        continue
+
+                    fit_starts = []
+                    target_starts = list(self.train_stride_target_starts.get(run, {}).get(stride, []))
+                    for s_begin in range(0, n_train):
+                        if not self._window_fits(T, s_begin, stride):
+                            continue
+                        fit_starts.append(s_begin)
+
+                    target_count = min(len(target_starts), len(fit_starts))
+                    target_count_by_stride[stride] += target_count
+                    if target_count <= 0:
+                        continue
+
+                    chosen = rng.choice(np.asarray(fit_starts, dtype=np.int64), size=target_count, replace=False)
+                    for s_begin in chosen.tolist():
+                        run_random.setdefault(int(s_begin), set()).add(stride)
+                    random_count_by_stride[stride] += int(target_count)
+
+                self.train_random_allowed[run] = run_random
+
+            print(
+                "[PHM-A2] random stride matching target_counts={} sampled_counts={}".format(
+                    target_count_by_stride,
+                    random_count_by_stride,
+                )
+            )
+
+    def _prepare_stage_weight_policy(self):
+        self.train_stage_weight_dup = {}
+        self.train_stage_weight_meta = {}
+
+        if self.flag != "train" or self.train_window_weight_policy != "stage_weight_only":
+            return
+
+        extra_strides = [s for s in self.train_stride_candidates if s > 1]
+        if not extra_strides:
+            print("[PHM-A2] stage_weight_only requested but no extra stride candidate exists; skip.")
+            return
+
+        ref_stride = min(extra_strides)
+        rng = np.random.default_rng(self.train_window_weight_seed + self.split_seed)
+
+        for run in self.train_runs:
+            y = self.raw_wear_um[run].astype(np.float64)
+            if self.train_stride_use_monotonic_wear:
+                y = np.maximum.accumulate(y)
+
+            T = len(y)
+            n = self._num_windows(T)
+            n_train = max(int(np.floor(n * self.split_ratio)), 1)
+            target_count = len(self.train_stride_target_starts.get(run, {}).get(ref_stride, []))
+
+            candidates = []
+            for s_begin in range(0, n_train):
+                if not self._window_fits(T, s_begin, 1):
+                    continue
+                last_hist = s_begin + self.seq_len - 1
+                stage_score = float(y[last_hist])
+                candidates.append((int(s_begin), stage_score))
+
+            if target_count <= 0 or not candidates:
+                self.train_stage_weight_dup[run] = {}
+                self.train_stage_weight_meta[run] = {
+                    "target_extra": int(target_count),
+                    "selected_extra": 0,
+                    "unique_selected": 0,
+                    "score_threshold": None,
+                }
+                continue
+
+            score_arr = np.asarray([score for _, score in candidates], dtype=np.float64)
+            q = min(max(self.train_window_weight_quantile, 0.0), 1.0)
+            score_threshold = float(np.quantile(score_arr, q))
+            high_stage = [item for item in candidates if item[1] >= score_threshold]
+            if not high_stage:
+                high_stage = sorted(candidates, key=lambda x: x[1], reverse=True)
+
+            pool_starts = np.asarray([s for s, _ in high_stage], dtype=np.int64)
+            replace = target_count > len(pool_starts)
+            chosen = rng.choice(pool_starts, size=target_count, replace=replace)
+
+            dup_counts = {}
+            for s_begin in chosen.tolist():
+                dup_counts[s_begin] = dup_counts.get(int(s_begin), 0) + 1
+
+            self.train_stage_weight_dup[run] = dup_counts
+            self.train_stage_weight_meta[run] = {
+                "target_extra": int(target_count),
+                "selected_extra": int(sum(dup_counts.values())),
+                "unique_selected": int(len(dup_counts)),
+                "score_threshold": score_threshold,
+            }
+
+        print(
+            "[PHM-A2] stage_weight_only ref_stride={} quantile={} meta={}".format(
+                ref_stride,
+                round(self.train_window_weight_quantile, 4),
+                self.train_stage_weight_meta,
+            )
+        )
+
+    def _allowed_train_strides(self, run: str, s_begin: int, T: int):
+        allowed = [1]
+        if self.flag != "train":
+            return allowed
+
+        if self.train_window_weight_policy == "stage_weight_only":
+            return allowed
+
+        if self.train_stride_policy == "random":
+            extra = sorted(self.train_random_allowed.get(run, {}).get(s_begin, set()))
+            return allowed + extra
+
+        slope = self.train_hist_slope.get(run, {}).get(s_begin, None)
+        if slope is None:
+            return allowed
+
+        for stride in self.train_stride_candidates:
+            if stride == 1:
+                continue
+            threshold = self.train_stride_thresholds.get(stride, None)
+            if threshold is None:
+                continue
+            if slope <= threshold and self._window_fits(T, s_begin, stride):
+                allowed.append(stride)
+        return allowed
+
     def _fit_scaler_on_train_coverage(self, raw_runs: dict) -> StandardScaler:
         scaler = StandardScaler()
         chunks = []
@@ -952,6 +1221,9 @@ class PHM_MergedMultivariateNpy(Dataset):
         if self.scale:
             self.scaler = self._fit_scaler_on_train_coverage(raw_runs)
 
+        self._prepare_train_stride_policy()
+        self._prepare_stage_weight_policy()
+
         self.data_runs = {}
         for r in self.runs:
             arr = raw_runs[r]
@@ -978,7 +1250,19 @@ class PHM_MergedMultivariateNpy(Dataset):
                 starts = range(0, n)
 
             for s in starts:
-                self.index.append((r, s))
+                if self.flag == "train":
+                    for stride in self._allowed_train_strides(r, s, T):
+                        self.index.append((r, s, stride))
+                else:
+                    self.index.append((r, s, 1))
+
+        if self.flag == "train" and self.train_window_weight_policy == "stage_weight_only":
+            extra_index = []
+            for r in self.runs:
+                for s_begin, rep in sorted(self.train_stage_weight_dup.get(r, {}).items()):
+                    extra_index.extend([(r, s_begin, 1)] * int(rep))
+            self.index.extend(extra_index)
+            print(f"[PHM-A2] stage_weight_only extra_train_windows={len(extra_index)}")
 
         if self.flag == "train" and self.subset_rand_ratio < 1.0:
             keep = max(int(len(self.index) * self.subset_rand_ratio), 1)
@@ -987,7 +1271,13 @@ class PHM_MergedMultivariateNpy(Dataset):
             self.index = [self.index[i] for i in chosen]
 
         self.raw = {f"{r}.npz": self.data_runs[r] for r in self.runs}
-        self.index_map = [(f"{r}.npz", s) for (r, s) in self.index]
+        self.index_map = [(f"{r}.npz", s, stride) for (r, s, stride) in self.index]
+
+        if self.flag == "train":
+            stride_stats = {}
+            for _, _, stride in self.index:
+                stride_stats[stride] = stride_stats.get(stride, 0) + 1
+            print(f"[PHM-A2] train stride usage={stride_stats}")
 
         print(f"[PHM-B2][{self.flag}] runs={self.runs}  num_index={len(self.index)}  root={self.root_path}  data_path={self.data_path}")
         sample_run = self.runs[0]
@@ -997,17 +1287,16 @@ class PHM_MergedMultivariateNpy(Dataset):
         return len(self.index)
 
     def __getitem__(self, idx):
-        run, s_begin = self.index[idx]
+        run, s_begin, stride = self.index[idx]
         data = self.data_runs[run]  # [T, C]
 
-        s_end = s_begin + self.seq_len
-
         if self.nonautoregressive:
-            r_begin = s_end
-            r_end = r_begin + self.output_token_len
+            x_idx = s_begin + np.arange(self.seq_len) * stride
+            last_x = int(x_idx[-1])
+            y_idx = np.arange(last_x + 1, last_x + 1 + self.output_token_len)
 
-            seq_x = torch.tensor(data[s_begin:s_end], dtype=torch.float32)   # [seq_len, C]
-            seq_y = torch.tensor(data[r_begin:r_end], dtype=torch.float32)   # [H, C]
+            seq_x = torch.tensor(data[x_idx], dtype=torch.float32)   # [seq_len, C]
+            seq_y = torch.tensor(data[y_idx], dtype=torch.float32)   # [H, C]
 
             # ✅ 可选：把未来段的特征列mask，只保留wear列（最后一列）
             if self.mask_future_features_in_y and seq_y.numel() > 0:
@@ -1018,6 +1307,10 @@ class PHM_MergedMultivariateNpy(Dataset):
             return seq_x, seq_y, seq_x_mark, seq_y_mark
 
         # unfold/autoregressive
+        if stride != 1:
+            raise NotImplementedError("Stride-augmented PHM windows currently support nonautoregressive mode only.")
+
+        s_end = s_begin + self.seq_len
         r_begin = s_begin + self.input_token_len
         r_end = s_end + self.output_token_len
 

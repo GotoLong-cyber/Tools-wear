@@ -51,6 +51,14 @@ def data_provider(args, flag):
             time_gap=getattr(args, "time_gap", 0),
             wear_agg=getattr(args, "wear_agg", "max"),
             mask_future_features_in_y=getattr(args, "mask_future_features_in_y", False),
+            train_stride_candidates=getattr(args, "train_stride_candidates", "1"),
+            train_stride_quantiles=getattr(args, "train_stride_quantiles", ""),
+            train_stride_use_monotonic_wear=bool(getattr(args, "train_stride_use_monotonic_wear", 1)),
+            train_stride_policy=getattr(args, "train_stride_policy", "slope"),
+            train_stride_random_seed=int(getattr(args, "train_stride_random_seed", 2026)),
+            train_window_weight_policy=getattr(args, "train_window_weight_policy", "none"),
+            train_window_weight_quantile=float(getattr(args, "train_window_weight_quantile", 0.5)),
+            train_window_weight_seed=int(getattr(args, "train_window_weight_seed", 2026)),
         )
 
     data_set = Data(**dataset_kwargs)

@@ -21,6 +21,7 @@ if __name__ == '__main__':
     parser.add_argument('--root_path', type=str, default='./dataset/ETT-small/', help='root path of the data file')
     parser.add_argument('--data_path', type=str, default='ETTh1.csv', help='data file')
     parser.add_argument('--checkpoints', type=str, default='./checkpoints/', help='location of model checkpoints')
+    parser.add_argument('--results_subdir', type=str, default='', help='subdirectory under ./results for this experiment round')
     parser.add_argument('--test_flag', type=str, default='T', help='test domain')
 
     # forecasting task
@@ -111,6 +112,54 @@ if __name__ == '__main__':
         type=int,
         default=1,
         help="PHM only: 1 means build one train loader per run and shuffle-merge by batch; 0 means single merged loader."
+    )
+    parser.add_argument(
+        "--train_stride_candidates",
+        type=str,
+        default="1",
+        help="PHM only: comma-separated history sampling strides used for train augmentation, e.g. 1,2,3"
+    )
+    parser.add_argument(
+        "--train_stride_quantiles",
+        type=str,
+        default="",
+        help="PHM only: quantiles for enabling extra train strides on low-slope windows, e.g. 0.5,0.25"
+    )
+    parser.add_argument(
+        "--train_stride_use_monotonic_wear",
+        type=int,
+        default=1,
+        help="PHM only: 1 means compute local slope on monotonic wear envelope when selecting train strides"
+    )
+    parser.add_argument(
+        "--train_stride_policy",
+        type=str,
+        default="slope",
+        help="PHM only: train stride policy, one of {slope, random}"
+    )
+    parser.add_argument(
+        "--train_stride_random_seed",
+        type=int,
+        default=2026,
+        help="PHM only: random seed used when train_stride_policy=random"
+    )
+    parser.add_argument(
+        "--train_window_weight_policy",
+        type=str,
+        default="none",
+        help="PHM only: train window reweight policy, one of {none, stage_weight_only}"
+    )
+    parser.add_argument(
+        "--train_window_weight_quantile",
+        type=float,
+        default=0.5,
+        help="PHM only: quantile used to define high-wear windows for stage_weight_only"
+    )
+    parser.add_argument(
+        "--train_window_weight_seed",
+        type=int,
+        default=2026,
+        help="PHM only: random seed used when train_window_weight_policy=stage_weight_only"
     )
 
     # optimization
