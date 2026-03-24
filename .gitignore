@@ -148,3 +148,7 @@ result_long_term_forecast.txt
 
 # Local backups / scratch
 scripts/timer_xl_133.sh.bak_stageC_20260310
+scripts/round_stageA_stability_20260316/data/
+scripts/round_stageA_stability_20260316/results/
+load_pth_ckpt.ipynb
+main
