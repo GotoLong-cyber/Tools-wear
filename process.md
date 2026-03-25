@@ -908,3 +908,105 @@
 4. 若结论成立，则下一条方法线转向：
    - 轻量训练域表示对齐（`CORAL / MMD`）；
    - 目标是继续压低 `c6` 的跨域误差，而不是继续堆叠普通特征。
+5. 分段分析口径固定为：
+   - 真实 wear 进度三等分；
+   - 同时记录对应的真实 wear 区间（um）；
+   - 输出 `MAE / RMSE / mean residual / underest_ratio`；
+   - 其中 `underest_ratio = mean(pred < true)`。
+6. 第一轮 `CORAL` 只先看 `fold1`，主标准为：
+   - overall `fullcurve_raw MAE` 下降；
+   - `late-stage MAE` 下降；
+   - `late-stage mean residual` 更接近 `0`。
+7. 只有当 `late` 段误差最大、且系统性低估显著强于 `early/mid`，才触发后段非对称损失。
+8. `CORAL` 最小验证已完成：
+   - `fold1 overall MAE: 9.0247 -> 9.0258`，基本持平；
+   - `late-stage MAE: 27.0208 -> 27.0098`，仅有极微弱变化；
+   - `late-stage residual` 和 `underest_ratio` 几乎不变。
+9. 当前判断：
+   - 轻量 `CORAL` 没有为 hardest fold 提供可见收益；
+   - 下一步切换到同样最小化的 `MMD` 单折验证。
+10. `AsymLoss` 首轮配置收紧为：
+   - 不改 `Current-best` 特征包；
+   - 固定高磨损阈值 `150um`；
+   - 首轮 `alpha=2.0`；
+   - 只做 `fold1` 单折验证。
+11. `AsymLoss` 两轮验证已完成：
+   - `Asym150` 未改善 `late`，且明显破坏 `mid`；
+   - `Asym196` 进一步恶化 `mid` 和 `late`；
+   - 当前实现方式下，这条线暂时冻结。
+12. 当前阶段的最稳判断：
+   - `CORAL` 无效；
+   - `MMD` 只有极弱正信号；
+   - 正式主线仍为 `Current-best`。
+13. 下一条实验线切换为测试时 `KNN retrieval`：
+   - 不再继续沿当前 `loss` 微调线深挖；
+   - 固定 `Current-best = RMS7 + Feat_4 + A2-Random-S2 + SPECTRAL_ENTROPY_CH1` 为唯一锚点。
+14. `KNN` 的定位不是替代回归头去做晚期外推：
+   - 因为训练库只来自 `c1/c4`，检索本质上只能插值；
+   - 它的作用是给 `c6` 晚期高失配区域提供更稳定的经验兜底。
+15. 第一轮 `KNN` 最小验证只做 `fold1(c1,c4->c6)`：
+   - 用 `shared_repr` 建 `c1/c4` 训练库；
+   - 比较 `head-only / knn-only / head+knn blend`；
+   - 距离先试 `cosine`，`K` 先试 `5/10`，`beta` 先试 `0.3/0.5`。
+16. `KNN` 第一轮成功标准：
+   - `fold1 overall fullcurve_raw MAE` 下降；
+   - `late-stage MAE` 下降；
+   - `late-stage mean residual` 更接近 `0`；
+   - 晚期曲线比 `head-only` 更稳。
+17. `KNN retrieval` 第一轮最小验证已完成：
+   - `head-only` 精确复现 `fold1 MAE = 9.0247`，说明检索评估口径没有偏；
+   - `knn-only@k5 = 25.2692`，`knn-only@k10 = 25.6555`；
+   - 最佳融合 `blend@k5_b03 = 13.4435`，仍远差于 `head-only`。
+18. 当前解释：
+   - 问题不是 KNN 无法外推这一点本身，而是当前 `shared_repr + cosine + label vote` 没有形成有效的经验兜底；
+   - 这条最小检索线暂不进入主线。
+19. 下一步切换为 `Retrieval V2`：
+   - 不再对未来绝对 wear 做直接投票；
+   - 改为检索未来增量 `delta = future_wear - current_last_wear`。
+20. 融合方式改为残差式修正：
+   - `pred_final = pred_head + beta * delta_knn`
+   - 目的是只补偿晚期增量不足，而不是把整条预测曲线拉向训练库上界。
+21. 第一轮 `Retrieval V2` 继续只做 `fold1(c1,c4->c6)`：
+   - 仍使用 `shared_repr`；
+   - 距离优先 `cosine`；
+   - `K` 先试 `5`；
+   - `beta` 先试 `0.3 / 0.5`。
+22. 为避免 early/mid 片段污染晚期修正，训练库优先只保留高磨损窗口子集。
+23. `Retrieval V2` 第一轮已完成：
+   - 固定 `150um` 子库在 train split 中筛空，不作为有效结论；
+   - 改用 `q80` late-ish 子库后，得到有效训练库 `66` 个窗口。
+24. 第一轮结果：
+   - `head-only = 9.0247`
+   - `delta-knn-only@k5 = 2.0357`
+   - `delta-blend@k5_b03 = 9.1119`
+25. 当前解释：
+   - `delta retrieval` 本身显示出很强信号；
+   - 但当前 `pred_head + beta * delta_knn` 融合公式没有优于 `head-only`；
+   - 后续若继续，应优先修正融合公式。
+26. 下一步切换到 `Retrieval V2.1`：
+   - 保持同一 `fold1 / q80 late-ish 子库 / cosine / K=5`；
+   - 只改融合公式，不动检索目标。
+27. 新融合公式：
+   - `delta_head = pred_head - current_last_wear`
+   - `pred_final = pred_head + beta * (delta_knn - delta_head)`
+28. 目的：
+   - 让检索只修正 head 的增量偏差；
+   - 避免把 `delta_knn` 再整段叠加到 `pred_head` 上。
+29. `Retrieval V2.1` fold1 已完成：
+   - `head-only = 9.0247`
+   - `delta-blend@k5_b03 = 6.2464`
+   - `delta-blend@k5_b05 = 4.5552`
+30. 核心结论：
+   - `delta retrieval` 方向成立；
+   - 真正有效的是残差式融合，不是上一轮的直接增量叠加。
+31. 三折验证已完成：
+   - `fold1: MAE 9.0247 -> 4.5552, RMSE 15.4064 -> 7.1528`
+   - `fold2: MAE 4.4520 -> 3.2214, RMSE 5.1674 -> 3.9766`
+   - `fold3: MAE 3.7052 -> 3.4591, RMSE 4.5311 -> 4.0645`
+32. 三折平均：
+   - `Current-best MAE = 5.7273`
+   - `Retrieval V2.1 MAE = 3.7452`
+   - `Current-best RMSE = 8.3683`
+   - `Retrieval V2.1 RMSE = 5.0646`
+33. 当前最强方案更新为：
+   - `RMS7 + Feat_4 + A2-Random-S2 + SPECTRAL_ENTROPY_CH1 + Retrieval V2.1`

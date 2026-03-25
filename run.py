@@ -61,6 +61,12 @@ if __name__ == '__main__':
                         help='Freeze backbone (embedding+blocks), train head only', default=False)
     parser.add_argument('--lam_mono', type=float, default=0.5, help='weight for monotonicity loss')
     parser.add_argument('--lam_smooth', type=float, default=0.05, help='weight for smoothness loss')
+    parser.add_argument('--lam_coral', type=float, default=0.0, help='weight for train-domain CORAL alignment loss')
+    parser.add_argument('--lam_mmd', type=float, default=0.0, help='weight for train-domain MMD alignment loss')
+    parser.add_argument('--lam_asym', type=float, default=0.0, help='weight for high-wear underestimation penalty')
+    parser.add_argument('--asym_wear_threshold_um', type=float, default=150.0, help='fixed raw wear threshold (um) for defining high-wear region; <=0 means use quantile fallback')
+    parser.add_argument('--asym_wear_quantile', type=float, default=0.66, help='train-wear quantile used to define high-wear region')
+    parser.add_argument('--asym_alpha', type=float, default=2.0, help='extra scaling for high-wear underestimation penalty')
     # parser.add_argument('--train_runs', type=str, default='c1,c4')
     # parser.add_argument('--test_runs', type=str, default='c6')
     parser.add_argument('--unfreeze_last_n', type=int, default=1,

@@ -79,7 +79,7 @@ class Model(nn.Module):
     #     if self.output_attention:
     #         return dec_out, attns
     #     return dec_out
-    def forecast(self, x, x_mark, y_mark):
+    def forecast(self, x, x_mark, y_mark, return_features=False):
         if self.use_norm:
             means = x.mean(1, keepdim=True).detach()  # [B, 1, C]
             x = x - means
@@ -104,6 +104,7 @@ class Model(nn.Module):
             # [B, C*N, D] -> [B, C, N, D] -> pick target -> [B, N, D]
             target_idx = self.target_idx if self.target_idx >= 0 else (C + self.target_idx)
             target_tokens = embed_out.reshape(B, C, N, -1)[:, target_idx]  # [B, N, D]
+            shared_repr = target_tokens.mean(dim=1)  # [B, D]
 
             # head: [B, N, D] -> [B, N, P]
             dec_out = self.head(target_tokens)  # [B, N, P]
@@ -117,6 +118,12 @@ class Model(nn.Module):
                 stdev_t = stdev[:, :, target_idx:target_idx + 1]  # [B,1,1]
                 dec_out = dec_out * stdev_t + means_t
 
+            # if self.output_attention:
+            #     return dec_out, attns
+            # return dec_out
+            if return_features:
+                aux = {"shared_repr": shared_repr, "attns": attns}
+                return dec_out, aux
             if self.output_attention:
                 return dec_out, attns
             return dec_out
@@ -129,9 +136,16 @@ class Model(nn.Module):
         if self.use_norm:
             dec_out = dec_out * stdev + means
 
+        # if self.output_attention:
+        #     return dec_out, attns
+        # return dec_out
+        if return_features:
+            pooled_repr = embed_out.reshape(B, C, N, -1).mean(dim=(1, 2))
+            aux = {"shared_repr": pooled_repr, "attns": attns}
+            return dec_out, aux
         if self.output_attention:
             return dec_out, attns
         return dec_out
 
-    def forward(self, x, x_mark, y_mark):
-        return self.forecast(x, x_mark, y_mark)
+    def forward(self, x, x_mark, y_mark, return_features=False):
+        return self.forecast(x, x_mark, y_mark, return_features=return_features)

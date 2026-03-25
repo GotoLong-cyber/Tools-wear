@@ -404,6 +404,77 @@ class Exp_Forecast(Exp_Basic):
         criterion = nn.MSELoss()
         return criterion
 
+    def _coral_loss(self, feat_a, feat_b):
+        if feat_a is None or feat_b is None:
+            return None
+        if feat_a.ndim != 2 or feat_b.ndim != 2:
+            return None
+        if feat_a.size(0) < 2 or feat_b.size(0) < 2:
+            return None
+
+        def _cov(x):
+            x = x - x.mean(dim=0, keepdim=True)
+            return (x.T @ x) / max(x.size(0) - 1, 1)
+
+        cov_a = _cov(feat_a)
+        cov_b = _cov(feat_b)
+        d = feat_a.size(1)
+        return ((cov_a - cov_b) ** 2).sum() / (4.0 * d * d)
+
+    def _mmd_loss(self, feat_a, feat_b):
+        if feat_a is None or feat_b is None:
+            return None
+        if feat_a.ndim != 2 or feat_b.ndim != 2:
+            return None
+        if feat_a.size(0) < 2 or feat_b.size(0) < 2:
+            return None
+
+        def _rbf_kernel(x, y, bandwidth):
+            dist2 = torch.cdist(x, y, p=2.0) ** 2
+            return torch.exp(-dist2 / bandwidth)
+
+        with torch.no_grad():
+            mix = torch.cat([feat_a, feat_b], dim=0)
+            mix_dist2 = torch.cdist(mix, mix, p=2.0) ** 2
+            bandwidth = mix_dist2.mean().clamp_min(1e-6)
+
+        k_xx = _rbf_kernel(feat_a, feat_a, bandwidth)
+        k_yy = _rbf_kernel(feat_b, feat_b, bandwidth)
+        k_xy = _rbf_kernel(feat_a, feat_b, bandwidth)
+        return k_xx.mean() + k_yy.mean() - 2.0 * k_xy.mean()
+
+    def _compute_asym_threshold(self, train_data):
+        if train_data is None or (not hasattr(train_data, "raw_wear_um")):
+            return None, None
+
+        train_runs = self._parse_run_cfg(getattr(self.args, "train_runs", ""))
+        wear_list = []
+        for run in train_runs:
+            if run in getattr(train_data, "raw_wear_um", {}):
+                wear_list.append(np.asarray(train_data.raw_wear_um[run], dtype=np.float64))
+        if not wear_list:
+            return None, None
+
+        wear_raw = np.concatenate(wear_list, axis=0)
+        fixed_thr = float(getattr(self.args, "asym_wear_threshold_um", 150.0))
+        if fixed_thr > 0.0:
+            raw_thr = fixed_thr
+        else:
+            q = float(getattr(self.args, "asym_wear_quantile", 0.66))
+            q = min(max(q, 0.0), 1.0)
+            raw_thr = float(np.quantile(wear_raw, q))
+
+        if hasattr(train_data, "scaler") and train_data.scaler is not None:
+            target_idx = int(getattr(self.args, "target_idx", -1))
+            Csc = int(train_data.scaler.mean_.shape[0])
+            target_idx = target_idx if target_idx >= 0 else (Csc + target_idx)
+            mean_t = float(train_data.scaler.mean_[target_idx])
+            scale_t = float(train_data.scaler.scale_[target_idx])
+            scaled_thr = (raw_thr - mean_t) / scale_t
+            return float(scaled_thr), float(raw_thr)
+
+        return float(raw_thr), float(raw_thr)
+
     def vali(self, vali_data, vali_loader, criterion, is_test=False):
         total_loss = []
         total_count = []
@@ -480,14 +551,18 @@ class Exp_Forecast(Exp_Basic):
 
         train_steps = int(train_bundle["train_steps"])
         early_stopping = EarlyStopping(self.args, verbose=True)
-        
+
         model_optim = self._select_optimizer()
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(model_optim, T_max=self.args.tmax, eta_min=1e-8)
         criterion = self._select_criterion()
-        
+        asym_threshold_scaled, asym_threshold_raw = self._compute_asym_threshold(train_data)
+        if ((self.args.ddp and self.args.local_rank == 0) or not self.args.ddp) and (asym_threshold_scaled is not None):
+            print(f"[Asym] enabled_threshold_scaled={asym_threshold_scaled:.6f} raw_um={asym_threshold_raw:.6f}")
+
         for epoch in range(self.args.train_epochs):
             iter_count = 0
             source_batch_counter = {}
+            coral_cache = {}
             self.model.train()
             epoch_time = time.time()
             for i, (source_tag, batch_pack) in enumerate(self._iter_train_batches(train_bundle, epoch)):
@@ -500,7 +575,27 @@ class Exp_Forecast(Exp_Basic):
                 batch_x_mark = batch_x_mark.float().to(self.device)
                 batch_y_mark = batch_y_mark.float().to(self.device)
 
-                outputs = self.model(batch_x, batch_x_mark, batch_y_mark)
+                # use_coral = bool(getattr(self.args, "lam_coral", 0.0) > 0) and \
+                #             (train_bundle["mode"] == "dual") and \
+                #             (self.args.model == "timer_xl")
+                use_coral = bool(getattr(self.args, "lam_coral", 0.0) > 0) and \
+                            (train_bundle["mode"] == "dual") and \
+                            (self.args.model == "timer_xl")
+                use_mmd = bool(getattr(self.args, "lam_mmd", 0.0) > 0) and \
+                          (train_bundle["mode"] == "dual") and \
+                          (self.args.model == "timer_xl")
+                use_align = use_coral or use_mmd
+                hidden_repr = None
+                # if use_coral:
+                if use_align:
+                    model_out = self.model(batch_x, batch_x_mark, batch_y_mark, return_features=True)
+                    if isinstance(model_out, tuple) and len(model_out) == 2 and isinstance(model_out[1], dict):
+                        outputs, aux = model_out
+                        hidden_repr = aux.get("shared_repr", None)
+                    else:
+                        outputs = model_out
+                else:
+                    outputs = self.model(batch_x, batch_x_mark, batch_y_mark)
                 if self.args.dp:
                     torch.cuda.synchronize()
                 if self.args.nonautoregressive:
@@ -533,11 +628,46 @@ class Exp_Forecast(Exp_Basic):
                 lam_mono = getattr(self.args, "lam_mono", 0.5)
                 lam_smooth = getattr(self.args, "lam_smooth", 0.05)
 
+                # loss = loss_mse + lam_mono * loss_mono + lam_smooth * loss_smooth
                 loss = loss_mse + lam_mono * loss_mono + lam_smooth * loss_smooth
+
+                loss_coral = torch.tensor(0.0, device=outputs.device)
+                loss_mmd = torch.tensor(0.0, device=outputs.device)
+                loss_asym = torch.tensor(0.0, device=outputs.device)
+                # if use_coral and hidden_repr is not None:
+                if use_align and hidden_repr is not None:
+                    other_sources = [k for k in coral_cache.keys() if k != source_tag]
+                    if other_sources:
+                        other_tag = other_sources[0]
+                        other_repr = coral_cache[other_tag]
+                        if use_coral:
+                            maybe_coral = self._coral_loss(hidden_repr, other_repr)
+                            if maybe_coral is not None:
+                                loss_coral = maybe_coral
+                                loss = loss + float(getattr(self.args, "lam_coral", 0.0)) * loss_coral
+                        if use_mmd:
+                            maybe_mmd = self._mmd_loss(hidden_repr, other_repr)
+                            if maybe_mmd is not None:
+                                loss_mmd = maybe_mmd
+                                loss = loss + float(getattr(self.args, "lam_mmd", 0.0)) * loss_mmd
+                    coral_cache[source_tag] = hidden_repr.detach()
+
+                lam_asym = float(getattr(self.args, "lam_asym", 0.0))
+                asym_alpha = float(getattr(self.args, "asym_alpha", 1.0))
+                if lam_asym > 0.0 and asym_threshold_scaled is not None:
+                    # loss_asym = ...
+                    high_mask = (batch_y > float(asym_threshold_scaled)).float()
+                    under_err = torch.relu(batch_y - outputs)
+                    denom = high_mask.sum().clamp_min(1.0)
+                    loss_asym = (((under_err ** 2) * high_mask).sum() / denom) * asym_alpha
+                    loss = loss + lam_asym * loss_asym
 
                 if (i + 1) % 100 == 0:
                     if (self.args.ddp and self.args.local_rank == 0) or not self.args.ddp:
-                        print("\titers: {0}, epoch: {1} | loss: {2:.7f}".format(i + 1, epoch + 1, loss.item()))
+                        # print("\titers: {0}, epoch: {1} | loss: {2:.7f} | coral: {3:.7f}".format(
+                        #     i + 1, epoch + 1, loss.item(), float(loss_coral.item())))
+                        print("\titers: {0}, epoch: {1} | loss: {2:.7f} | coral: {3:.7f} | mmd: {4:.7f} | asym: {5:.7f}".format(
+                            i + 1, epoch + 1, loss.item(), float(loss_coral.item()), float(loss_mmd.item()), float(loss_asym.item())))
                         speed = (time.time() - time_now) / iter_count
                         left_time = speed * ((self.args.train_epochs - epoch) * train_steps - i)
                         print('\tspeed: {:.4f}s/iter; left time: {:.4f}s'.format(speed, left_time))
