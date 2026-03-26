@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="980" viewBox="0 0 1600 980">
+  <defs>
+    <style>
+      .title { font: 700 34px 'DejaVu Sans', sans-serif; fill: #17202a; }
+      .subtitle { font: 500 20px 'DejaVu Sans', sans-serif; fill: #46505a; }
+      .section { font: 700 24px 'DejaVu Sans', sans-serif; fill: #17202a; }
+      .label { font: 600 20px 'DejaVu Sans', sans-serif; fill: #17202a; }
+      .text { font: 18px 'DejaVu Sans', sans-serif; fill: #24303a; }
+      .small { font: 16px 'DejaVu Sans', sans-serif; fill: #4d5963; }
+      .box-blue { fill: #e8f1fb; stroke: #2f6fab; stroke-width: 2.5; rx: 18; ry: 18; }
+      .box-orange { fill: #fff1e8; stroke: #d9732a; stroke-width: 2.5; rx: 18; ry: 18; }
+      .box-green { fill: #edf8ef; stroke: #2f8f4e; stroke-width: 2.5; rx: 18; ry: 18; }
+      .box-gray { fill: #f6f8fa; stroke: #7f8c8d; stroke-width: 2; rx: 18; ry: 18; }
+      .arrow-blue { stroke: #2f6fab; stroke-width: 4; fill: none; marker-end: url(#arrowBlue); }
+      .arrow-orange { stroke: #d9732a; stroke-width: 4; fill: none; marker-end: url(#arrowOrange); }
+      .arrow-gray { stroke: #7f8c8d; stroke-width: 3; fill: none; marker-end: url(#arrowGray); }
+    </style>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2f6fab"/>
+    </marker>
+    <marker id="arrowOrange" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#d9732a"/>
+    </marker>
+    <marker id="arrowGray" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7f8c8d"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1600" height="980" fill="#ffffff"/>
+
+  <text x="70" y="70" class="title">Baseline-final vs A2-final: 正式实验结构图</text>
+  <text x="70" y="108" class="subtitle">当前正式对比只回答一个问题：在相同特征、相同模型、相同训练协议下，A2 是否稳定提升主基线。</text>
+
+  <rect x="70" y="150" width="1460" height="120" class="box-gray"/>
+  <text x="100" y="190" class="section">共同设置（两轮完全相同）</text>
+  <text x="100" y="225" class="text">特征：RMS7 + Feat_4</text>
+  <text x="420" y="225" class="text">模型：Timer-XL</text>
+  <text x="680" y="225" class="text">训练协议：seed=2026, epochs=1000, patience=100</text>
+  <text x="100" y="255" class="text">冻结策略：partial backbone tuning（约 23.42% 参数可训练）</text>
+  <text x="760" y="255" class="text">验证方式：三折交叉验证（c1/c4/c6）</text>
+
+  <text x="70" y="330" class="section">输入数据与两条正式实验线</text>
+
+  <rect x="70" y="370" width="330" height="180" class="box-green"/>
+  <text x="100" y="410" class="label">统一输入数据</text>
+  <text x="100" y="445" class="text">原始 pass-level 特征序列</text>
+  <text x="100" y="475" class="text">8 维输入 = RMS7 + Feat_4</text>
+  <text x="100" y="505" class="text">三折设置：</text>
+  <text x="130" y="535" class="small">fold1: c1,c4 -&gt; c6</text>
+  <text x="130" y="560" class="small">fold2: c4,c6 -&gt; c1</text>
+  <text x="130" y="585" class="small">fold3: c1,c6 -&gt; c4</text>
+
+  <rect x="500" y="330" width="430" height="300" class="box-blue"/>
+  <text x="530" y="375" class="label">Baseline-final</text>
+  <text x="530" y="415" class="text">训练窗口：全部使用原始时间轴</text>
+  <text x="530" y="445" class="text">训练取窗方式：stride = 1</text>
+  <text x="530" y="475" class="text">不做时间压缩增强</text>
+  <text x="530" y="505" class="text">作用：作为正式标准对照组</text>
+  <text x="530" y="555" class="small">它回答：当前主基线在最终统一协议下的正式性能是多少？</text>
+  <text x="530" y="585" class="small">结果口径：fullcurve_raw MAE / RMSE + 整条磨损曲线图</text>
+
+  <rect x="1030" y="330" width="430" height="300" class="box-orange"/>
+  <text x="1060" y="375" class="label">A2-final</text>
+  <text x="1060" y="415" class="text">特征、模型、冻结协议全部不变</text>
+  <text x="1060" y="445" class="text">只改训练窗口生成策略</text>
+  <text x="1060" y="475" class="text">正式定版：Random-S2 time compression augmentation</text>
+  <text x="1060" y="505" class="text">训练时部分窗口使用 stride = 2</text>
+  <text x="1060" y="535" class="text">测试时仍保持原始时间轴（stride = 1）</text>
+  <text x="1060" y="585" class="small">它回答：仅靠训练时 stride=2 时间压缩增强，能否稳定提升主基线？</text>
+
+  <path d="M 400 460 C 445 460, 450 460, 500 460" class="arrow-blue"/>
+  <path d="M 400 500 C 710 500, 800 500, 1030 500" class="arrow-orange"/>
+
+  <rect x="70" y="700" width="1460" height="210" class="box-gray"/>
+  <text x="100" y="745" class="section">当前结论应该怎么理解</text>
+  <text x="100" y="790" class="text">1. Baseline-final 不是新方法，它是正式版主基线，用来提供统一协议下的标准对照。</text>
+  <text x="100" y="825" class="text">2. A2-final 不是换特征，也不是换模型，而是在同一基线之上只加入训练时 stride=2 的时间压缩增强。</text>
+  <text x="100" y="860" class="text">3. 如果 A2-final 优于 Baseline-final，说明 A2 与当前最强特征基线是互补的，值得作为正式模块保留。</text>
+
+  <path d="M 715 630 C 715 665, 715 670, 715 700" class="arrow-gray"/>
+  <path d="M 1245 630 C 1245 665, 1245 670, 1245 700" class="arrow-gray"/>
+</svg>

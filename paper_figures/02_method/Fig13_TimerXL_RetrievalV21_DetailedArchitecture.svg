@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1180" viewBox="0 0 1800 1180">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
+    </marker>
+    <style>
+      .title { font: 700 32px sans-serif; fill: #0f172a; }
+      .subtitle { font: 500 18px sans-serif; fill: #334155; }
+      .box-title { font: 700 20px sans-serif; fill: #0f172a; }
+      .text { font: 500 16px sans-serif; fill: #1e293b; }
+      .small { font: 500 14px sans-serif; fill: #334155; }
+      .cap { font: 700 18px sans-serif; fill: #0f172a; }
+      .line { stroke: #334155; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .dashed { stroke-dasharray: 10 8; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1800" height="1180" fill="#f8fafc"/>
+  <text x="60" y="70" class="title">Timer-XL + Retrieval V2.1 Detailed Dataflow</text>
+  <text x="60" y="105" class="subtitle">Current formal pipeline for PHM tool wear forecasting in this project</text>
+
+  <rect x="60" y="150" width="340" height="250" rx="18" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+  <text x="85" y="190" class="box-title">1. PHM Window Construction</text>
+  <text x="85" y="225" class="text">Input run data = selected features + wear</text>
+  <text x="85" y="255" class="small">data = concat([X, wear[:, None]])</text>
+  <text x="85" y="290" class="text">Formal setup:</text>
+  <text x="105" y="320" class="small">seq_len = 96</text>
+  <text x="105" y="345" class="small">input_token_len = 96</text>
+  <text x="105" y="370" class="small">output_token_len = 16</text>
+  <text x="85" y="405" class="text">Each sample:</text>
+  <text x="105" y="435" class="small">seq_x = past 96 steps of all channels</text>
+  <text x="105" y="460" class="small">seq_y = next 16 steps</text>
+
+  <rect x="470" y="150" width="360" height="250" rx="18" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+  <text x="495" y="190" class="box-title">2. Per-Channel Tokenization</text>
+  <text x="495" y="225" class="text">x: [B, 96, C] -&gt; permute -&gt; [B, C, 96]</text>
+  <text x="495" y="255" class="text">unfold by input_token_len = 96</text>
+  <text x="495" y="285" class="small">Current formal run has N = 1 token per channel</text>
+  <text x="495" y="320" class="text">Linear embedding:</text>
+  <text x="515" y="350" class="small">96-d time patch -&gt; d_model = 1024</text>
+  <text x="495" y="385" class="text">Flatten tokens:</text>
+  <text x="515" y="415" class="small">[B, C, N, D] -&gt; [B, C*N, D]</text>
+
+  <rect x="900" y="150" width="380" height="250" rx="18" fill="#fef3c7" stroke="#d97706" stroke-width="3"/>
+  <text x="925" y="190" class="box-title">3. Timer-XL Backbone</text>
+  <text x="925" y="225" class="text">8 Timer layers</text>
+  <text x="925" y="255" class="small">TimeAttention + FFN + LayerNorm</text>
+  <text x="925" y="290" class="text">Input:</text>
+  <text x="945" y="320" class="small">token sequence [B, C*N, 1024]</text>
+  <text x="925" y="355" class="text">Output:</text>
+  <text x="945" y="385" class="small">contextual token embeddings</text>
+  <text x="945" y="410" class="small">embed_out: [B, C*N, 1024]</text>
+  <text x="925" y="445" class="text">This is the main temporal representation learner.</text>
+
+  <rect x="1350" y="150" width="380" height="250" rx="18" fill="#fee2e2" stroke="#dc2626" stroke-width="3"/>
+  <text x="1375" y="190" class="box-title">4. Target-Only Forecast Head</text>
+  <text x="1375" y="225" class="text">target_only = True</text>
+  <text x="1375" y="255" class="small">Only keep the last channel = wear</text>
+  <text x="1375" y="290" class="text">target_tokens: [B, N, 1024]</text>
+  <text x="1375" y="320" class="text">shared_repr = mean(target_tokens, dim=1)</text>
+  <text x="1375" y="350" class="small">This is the feature used by Retrieval V2.1</text>
+  <text x="1375" y="385" class="text">head: Linear(1024 -&gt; 16)</text>
+  <text x="1375" y="415" class="small">Predict next 16 wear values</text>
+  <text x="1375" y="445" class="small">Output dec_out: [B, 16, 1]</text>
+
+  <path d="M 400 275 L 470 275" class="line"/>
+  <path d="M 830 275 L 900 275" class="line"/>
+  <path d="M 1280 275 L 1350 275" class="line"/>
+
+  <rect x="60" y="480" width="650" height="260" rx="18" fill="#e0f2fe" stroke="#0891b2" stroke-width="3"/>
+  <text x="85" y="520" class="box-title">5. Current-best Training Recipe</text>
+  <text x="85" y="555" class="text">Input features:</text>
+  <text x="180" y="555" class="small">RMS7 + Feat_4 + SE1 + historical wear</text>
+  <text x="85" y="590" class="text">A2-Random-S2:</text>
+  <text x="220" y="590" class="small">train-time time compression augmentation with stride = 2 only</text>
+  <text x="85" y="625" class="text">SE1:</text>
+  <text x="140" y="625" class="small">spectral entropy feature added before model input</text>
+  <text x="85" y="660" class="text">Loss during main training:</text>
+  <text x="285" y="660" class="small">regression + monotonicity + smoothness</text>
+  <text x="85" y="695" class="text">Checkpoint used later by retrieval:</text>
+  <text x="320" y="695" class="small">trained Timer-XL on Current-best setting</text>
+
+  <rect x="780" y="480" width="950" height="260" rx="18" fill="#f3e8ff" stroke="#7c3aed" stroke-width="3"/>
+  <text x="805" y="520" class="box-title">6. Retrieval V2.1 at Test Time</text>
+  <text x="805" y="555" class="text">Step A: run trained Timer-XL on train windows and test windows</text>
+  <text x="805" y="585" class="small">Extract shared_repr from both sides</text>
+  <text x="805" y="620" class="text">Step B: build retrieval library from training runs only</text>
+  <text x="825" y="650" class="small">library = q80 late-ish windows from training domain</text>
+  <text x="825" y="675" class="small">distance = cosine, K = 5</text>
+  <text x="805" y="710" class="text">Step C: retrieve future delta, not absolute wear</text>
+
+  <path d="M 1040 400 L 1040 480" class="line"/>
+  <path d="M 1540 400 L 1540 480" class="line dashed"/>
+
+  <rect x="60" y="810" width="790" height="280" rx="18" fill="#ecfccb" stroke="#65a30d" stroke-width="3"/>
+  <text x="85" y="850" class="box-title">7. Delta-Residual Fusion</text>
+  <text x="85" y="890" class="text">For each test window:</text>
+  <text x="105" y="925" class="small">current_last_wear = last observed wear in history window</text>
+  <text x="105" y="950" class="small">delta_head = pred_head - current_last_wear</text>
+  <text x="105" y="975" class="small">delta_knn = weighted average retrieved future delta</text>
+  <text x="105" y="1000" class="small">pred_final = pred_head + beta * (delta_knn - delta_head)</text>
+  <text x="105" y="1025" class="small">Formal best: beta = 0.5</text>
+  <text x="85" y="1060" class="text">Meaning:</text>
+  <text x="165" y="1060" class="small">use retrieval to correct the future increment error of the head</text>
+
+  <rect x="920" y="810" width="810" height="280" rx="18" fill="#fff7ed" stroke="#ea580c" stroke-width="3"/>
+  <text x="945" y="850" class="box-title">8. Final Curve Reconstruction and Evaluation</text>
+  <text x="945" y="890" class="text">Each window predicts next 16 wear points</text>
+  <text x="945" y="920" class="text">Overlapping windows are merged back to one full wear curve</text>
+  <text x="945" y="955" class="text">Metrics are computed on reconstructed raw full curve:</text>
+  <text x="965" y="985" class="small">fullcurve_raw MAE</text>
+  <text x="965" y="1010" class="small">fullcurve_raw RMSE</text>
+  <text x="965" y="1035" class="small">stage-wise MAE / residual / underestimation ratio</text>
+  <text x="945" y="1070" class="text">Current formal best average:</text>
+  <text x="1210" y="1070" class="small">MAE 3.7452, RMSE 5.0646</text>
+
+  <path d="M 710 610 L 780 610" class="line"/>
+  <path d="M 1255 740 L 1255 810" class="line"/>
+  <path d="M 850 950 L 920 950" class="line"/>
+
+  <text x="1440" y="520" class="cap">Retrieval library source</text>
+  <text x="1440" y="545" class="small">train windows only, no future test labels</text>
+  <text x="1440" y="570" class="small">but current protocol uses historical wear as input</text>
+</svg>
