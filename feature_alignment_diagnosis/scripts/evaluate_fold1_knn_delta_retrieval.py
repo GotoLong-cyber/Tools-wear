@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Hyperparameters are fixed a priori (k=5, beta=0.5, late_q=0.80).
+# No test-set tuning is performed. All parameters loaded from knn_config.json.
 from __future__ import annotations
 
 import argparse
@@ -29,6 +31,27 @@ from feature_alignment_diagnosis.scripts.evaluate_fold1_knn_retrieval import (
 )
 from data_provider.data_factory import data_provider
 from exp.exp_forecast import Exp_Forecast
+
+# Fixed defaults (also mirrored in knn_config.json)
+FIXED_K = 5
+FIXED_BETA = 0.5
+FIXED_LATE_LIBRARY_QUANTILE = 0.80
+
+DEFAULT_KNN_CONFIG = Path(__file__).resolve().with_name("knn_config.json")
+
+
+def load_fixed_knn_config(config_path: Path) -> tuple[int, float, float, dict]:
+    cfg = json.loads(config_path.read_text(encoding="utf-8"))
+    k = int(cfg.get("k", FIXED_K))
+    beta = float(cfg.get("beta", FIXED_BETA))
+    late_q = float(cfg.get("late_library_quantile", FIXED_LATE_LIBRARY_QUANTILE))
+    if k <= 0:
+        raise ValueError(f"invalid k in {config_path}: {k}")
+    if not (0.0 <= beta <= 1.0):
+        raise ValueError(f"invalid beta in {config_path}: {beta}")
+    if not (0.0 <= late_q <= 1.0):
+        raise ValueError(f"invalid late_library_quantile in {config_path}: {late_q}")
+    return k, beta, late_q, cfg
 
 
 def extract_current_last_wear(dataset, seq_len: int) -> np.ndarray:
@@ -92,6 +115,10 @@ def distance_to_dynamic_beta(
     beta_min: float,
     beta_max: float,
 ) -> np.ndarray:
+    # WARNING:
+    # This maps beta using batch-level distance quantiles over test windows.
+    # It is non-causal for strict online deployment.
+    # Formal paper results should use gate_mode='none'.
     lo = float(np.quantile(distances, qlo))
     hi = float(np.quantile(distances, qhi))
     if hi <= lo + 1e-8:
@@ -109,10 +136,10 @@ def main() -> None:
     parser.add_argument("--checkpoint_path", type=Path, default=Path("checkpoints/forecast_PHM_c1c4_to_c6_rms7_plus_feat4_plus_se1_A2_dual_seed2026_e1000_bt96_gpu0_timer_xl_PHM_MergedMultivariateNpy_sl96_it96_ot16_lr0.0001_bt96_wd0_el8_dm1024_dff2048_nh8_cosTrue_test_0/checkpoint.pth"))
     parser.add_argument("--results_subdir", type=str, default="20260324_KNNDeltaFold1")
     parser.add_argument("--distance", type=str, default="cosine")
-    parser.add_argument("--k", type=int, default=5)
-    parser.add_argument("--betas", type=str, default="0.3,0.5")
+    parser.add_argument("--k", type=int, default=5, help="deprecated, ignored; use knn_config.json")
+    parser.add_argument("--betas", type=str, default="", help="deprecated, ignored; use knn_config.json")
     parser.add_argument("--library_wear_threshold_um", type=float, default=150.0)
-    parser.add_argument("--library_wear_quantile", type=float, default=0.66)
+    parser.add_argument("--library_wear_quantile", type=float, default=0.80, help="deprecated, ignored; use knn_config.json")
     parser.add_argument("--blend_mode", type=str, default="delta_residual", choices=["delta_add", "delta_residual"])
     parser.add_argument("--gate_mode", type=str, default="none", choices=["none", "distance_linear"])
     parser.add_argument("--gate_stat", type=str, default="min", choices=["min", "mean_topk"])
@@ -123,6 +150,7 @@ def main() -> None:
     parser.add_argument("--train_runs", type=str, default="c1,c4")
     parser.add_argument("--test_runs", type=str, default="c6")
     parser.add_argument("--tag", type=str, default="fold1")
+    parser.add_argument("--knn_config", type=Path, default=DEFAULT_KNN_CONFIG)
     args = parser.parse_args()
 
     project_root = args.project_root.resolve()
@@ -130,6 +158,11 @@ def main() -> None:
     checkpoint_path = (project_root / args.checkpoint_path).resolve()
     results_root = project_root / "results" / args.results_subdir
     results_root.mkdir(parents=True, exist_ok=True)
+    config_path = args.knn_config if args.knn_config.is_absolute() else (project_root / args.knn_config)
+    fixed_k, fixed_beta, fixed_late_q, knn_cfg = load_fixed_knn_config(config_path.resolve())
+    if str(args.betas).strip():
+        print(f"[KNN-DELTA][INFO] --betas is ignored; using fixed config from {config_path.resolve()}")
+    print(f"[KNN-DELTA][INFO] fixed k={fixed_k}, beta={fixed_beta}, late_q={fixed_late_q}")
 
     cfg = build_args(project_root, runtime_root, checkpoint_path, args.results_subdir)
     cfg.train_runs = str(args.train_runs)
@@ -165,7 +198,7 @@ def main() -> None:
     lib_mask, lib_thr = select_library_mask(
         train_current_last,
         threshold_um=float(args.library_wear_threshold_um),
-        quantile=float(args.library_wear_quantile),
+        quantile=float(fixed_late_q),
     )
     if int(lib_mask.sum()) == 0:
         # Fallback: if the fixed threshold is above all train-window current wear,
@@ -173,7 +206,7 @@ def main() -> None:
         lib_mask, lib_thr = select_library_mask(
             train_current_last,
             threshold_um=-1.0,
-            quantile=float(args.library_wear_quantile),
+            quantile=float(fixed_late_q),
         )
     lib_repr = train_repr[lib_mask]
     lib_delta_targets = train_delta_targets[lib_mask]
@@ -196,11 +229,11 @@ def main() -> None:
         raise NotImplementedError("Only cosine distance is supported in Retrieval V2 first round.")
 
     delta_knn, min_dists, mean_topk_dists = cosine_knn_predict_with_meta(
-        lib_repr, lib_delta_targets, test_repr, k=int(args.k)
+        lib_repr, lib_delta_targets, test_repr, k=int(fixed_k)
     )
     knn_abs = test_current_last[:, None] + delta_knn
 
-    knn_mode = f"delta-knn-only@k{int(args.k)}"
+    knn_mode = f"delta-knn-only@k{int(fixed_k)}"
     knn_pred_full, _, _ = reconstruct_full_curve(knn_abs, test_targets, test_data, seq_len=seq_len)
     knn_metrics = metrics_from_full_curve(knn_pred_full, true_raw_full, seq_len=seq_len)
     overall_rows.append({"mode": knn_mode, **knn_metrics})
@@ -208,28 +241,23 @@ def main() -> None:
         stage_rows.append({"mode": knn_mode, **row})
     pred_curves[knn_mode] = knn_pred_full
 
-    betas = [float(x) for x in str(args.betas).split(",") if str(x).strip()]
-    best_blend_name = ""
-    best_blend_mae = float("inf")
-    for beta in betas:
-        # blend_pred = head_pred + beta * delta_knn
-        if args.blend_mode == "delta_add":
-            blend_pred = head_pred + beta * delta_knn
-        else:
-            delta_head = head_pred - test_current_last[:, None]
-            blend_pred = head_pred + beta * (delta_knn - delta_head)
-        mode = f"delta-blend@k{int(args.k)}_b{str(beta).replace('.', '')}"
-        pred_full, _, _ = reconstruct_full_curve(blend_pred, test_targets, test_data, seq_len=seq_len)
-        cur_metrics = metrics_from_full_curve(pred_full, true_raw_full, seq_len=seq_len)
-        overall_rows.append({"mode": mode, **cur_metrics})
-        for row in stage_metrics(pred_full, true_raw_full, stage_info):
-            stage_rows.append({"mode": mode, **row})
-        pred_curves[mode] = pred_full
-        if cur_metrics["mae_full_raw"] < best_blend_mae:
-            best_blend_mae = cur_metrics["mae_full_raw"]
-            best_blend_name = mode
+    if args.blend_mode == "delta_add":
+        blend_pred = head_pred + fixed_beta * delta_knn
+    else:
+        delta_head = head_pred - test_current_last[:, None]
+        blend_pred = head_pred + fixed_beta * (delta_knn - delta_head)
+    mode = f"delta-blend@k{int(fixed_k)}_b{str(fixed_beta).replace('.', '')}"
+    pred_full, _, _ = reconstruct_full_curve(blend_pred, test_targets, test_data, seq_len=seq_len)
+    cur_metrics = metrics_from_full_curve(pred_full, true_raw_full, seq_len=seq_len)
+    overall_rows.append({"mode": mode, **cur_metrics})
+    for row in stage_metrics(pred_full, true_raw_full, stage_info):
+        stage_rows.append({"mode": mode, **row})
+    pred_curves[mode] = pred_full
 
     if args.gate_mode == "distance_linear":
+        # WARNING:
+        # gate_mode != "none" uses statistics from the whole test-window batch.
+        # Keep this branch for exploratory analysis only; do not use it for formal claims.
         gate_dist = min_dists if str(args.gate_stat) == "min" else mean_topk_dists
         beta_dyn = distance_to_dynamic_beta(
             gate_dist,
@@ -241,25 +269,20 @@ def main() -> None:
         # gate_blend = head_pred + beta_dyn[:, None] * delta_knn
         if args.blend_mode == "delta_add":
             gate_blend = head_pred + beta_dyn[:, None] * delta_knn
-            gate_mode_name = f"delta-gated@k{int(args.k)}_add"
+            gate_mode_name = f"delta-gated@k{int(fixed_k)}_add"
         else:
             delta_head = head_pred - test_current_last[:, None]
             gate_blend = head_pred + beta_dyn[:, None] * (delta_knn - delta_head)
-            gate_mode_name = f"delta-gated@k{int(args.k)}_res"
+            gate_mode_name = f"delta-gated@k{int(fixed_k)}_res"
         pred_full, _, _ = reconstruct_full_curve(gate_blend, test_targets, test_data, seq_len=seq_len)
         gate_metrics = metrics_from_full_curve(pred_full, true_raw_full, seq_len=seq_len)
         overall_rows.append({"mode": gate_mode_name, **gate_metrics})
         for row in stage_metrics(pred_full, true_raw_full, stage_info):
             stage_rows.append({"mode": gate_mode_name, **row})
         pred_curves[gate_mode_name] = pred_full
-        if gate_metrics["mae_full_raw"] < best_blend_mae:
-            best_blend_mae = gate_metrics["mae_full_raw"]
-            best_blend_name = gate_mode_name
 
     overall_rows.sort(key=lambda x: x["mae_full_raw"])
-    best_curve_keys = ["head-only", knn_mode]
-    if best_blend_name:
-        best_curve_keys.append(best_blend_name)
+    best_curve_keys = ["head-only", knn_mode, mode]
     tag = str(args.tag).strip() or "fold"
     save_curve_plot(
         results_root / f"wear_full_curve_knn_delta_compare_{tag}.png",
@@ -295,13 +318,14 @@ def main() -> None:
         wr.writeheader()
         wr.writerows(stage_rows)
 
-    write_summary_md(summary_path, overall_rows, stage_rows, best_blend_name)
+    write_summary_md(summary_path, overall_rows, stage_rows, mode)
     manifest = {
         "runtime_root": str(runtime_root),
         "checkpoint_path": str(checkpoint_path),
         "distance": args.distance,
-        "k": int(args.k),
-        "betas": betas,
+        "k": int(fixed_k),
+        "beta": float(fixed_beta),
+        "late_library_quantile": float(fixed_late_q),
         "blend_mode": args.blend_mode,
         "gate_mode": args.gate_mode,
         "gate_stat": args.gate_stat,
@@ -311,14 +335,16 @@ def main() -> None:
         "gate_beta_max": float(args.gate_beta_max),
         "library_size": int(lib_mask.sum()),
         "library_wear_threshold_um": float(lib_thr),
-        "best_blend_name": best_blend_name,
-        "best_blend_mae_full_raw": best_blend_mae,
+        "knn_config_path": str(config_path.resolve()),
+        "knn_config": knn_cfg,
+        "selected_blend_name": mode,
+        "selected_blend_mae_full_raw": cur_metrics["mae_full_raw"],
     }
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"[KNN-DELTA][OK] results_root={results_root}")
     print(f"[KNN-DELTA][OK] library_size={int(lib_mask.sum())} threshold_um={lib_thr:.4f}")
-    print(f"[KNN-DELTA][OK] best_blend={best_blend_name} mae_full_raw={best_blend_mae:.4f}")
+    print(f"[KNN-DELTA][OK] selected_blend={mode} mae_full_raw={cur_metrics['mae_full_raw']:.4f}")
 
 
 if __name__ == "__main__":

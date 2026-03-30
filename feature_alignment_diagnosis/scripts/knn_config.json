@@ -1,0 +1,6 @@
+{
+  "k": 5,
+  "beta": 0.5,
+  "late_library_quantile": 0.80,
+  "note": "Fixed hyperparameters, train-only determined, no test-set tuning"
+}

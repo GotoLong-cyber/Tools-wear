@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "${PROJECT_ROOT}"
 
-PYTHON_BIN="/home/lc24/miniconda3/envs/TimerXL/bin/python"
+PYTHON_BIN="${PYTHON_BIN:-/home/jyc23/miniconda3/envs/TimerXL/bin/python}"
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"
 
 "${PYTHON_BIN}" "${PROJECT_ROOT}/feature_alignment_diagnosis/scripts/run_retrieval_v21_infer.py" \

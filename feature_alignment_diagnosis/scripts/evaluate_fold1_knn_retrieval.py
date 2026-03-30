@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Hyperparameters are fixed a priori (k=5, beta=0.5, late_q=0.80).
+# No test-set tuning is performed. All parameters loaded from knn_config.json.
 from __future__ import annotations
 
 import argparse
@@ -20,6 +22,27 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from data_provider.data_factory import data_provider
 from exp.exp_forecast import Exp_Forecast
+
+# Fixed defaults (also mirrored in knn_config.json)
+FIXED_K = 5
+FIXED_BETA = 0.5
+FIXED_LATE_LIBRARY_QUANTILE = 0.80
+
+DEFAULT_KNN_CONFIG = Path(__file__).resolve().with_name("knn_config.json")
+
+
+def load_fixed_knn_config(config_path: Path) -> tuple[int, float, float, dict]:
+    cfg = json.loads(config_path.read_text(encoding="utf-8"))
+    k = int(cfg.get("k", FIXED_K))
+    beta = float(cfg.get("beta", FIXED_BETA))
+    late_q = float(cfg.get("late_library_quantile", FIXED_LATE_LIBRARY_QUANTILE))
+    if k <= 0:
+        raise ValueError(f"invalid k in {config_path}: {k}")
+    if not (0.0 <= beta <= 1.0):
+        raise ValueError(f"invalid beta in {config_path}: {beta}")
+    if not (0.0 <= late_q <= 1.0):
+        raise ValueError(f"invalid late_library_quantile in {config_path}: {late_q}")
+    return k, beta, late_q, cfg
 
 
 def build_args(project_root: Path, runtime_root: Path, checkpoint_path: Path, results_subdir: str) -> SimpleNamespace:
@@ -384,8 +407,9 @@ def main() -> None:
     parser.add_argument("--checkpoint_path", type=Path, default=Path("checkpoints/forecast_PHM_c1c4_to_c6_rms7_plus_feat4_plus_se1_A2_dual_seed2026_e1000_bt96_gpu0_timer_xl_PHM_MergedMultivariateNpy_sl96_it96_ot16_lr0.0001_bt96_wd0_el8_dm1024_dff2048_nh8_cosTrue_test_0/checkpoint.pth"))
     parser.add_argument("--results_subdir", type=str, default="20260324_KNNFold1")
     parser.add_argument("--distance", type=str, default="cosine")
-    parser.add_argument("--ks", type=str, default="5,10")
-    parser.add_argument("--betas", type=str, default="0.3,0.5")
+    parser.add_argument("--ks", type=str, default="", help="deprecated, ignored; use knn_config.json")
+    parser.add_argument("--betas", type=str, default="", help="deprecated, ignored; use knn_config.json")
+    parser.add_argument("--knn_config", type=Path, default=DEFAULT_KNN_CONFIG)
     args = parser.parse_args()
 
     project_root = args.project_root.resolve()
@@ -393,6 +417,11 @@ def main() -> None:
     checkpoint_path = (project_root / args.checkpoint_path).resolve()
     results_root = project_root / "results" / args.results_subdir
     results_root.mkdir(parents=True, exist_ok=True)
+    config_path = args.knn_config if args.knn_config.is_absolute() else (project_root / args.knn_config)
+    fixed_k, fixed_beta, fixed_late_q, knn_cfg = load_fixed_knn_config(config_path.resolve())
+    if str(args.ks).strip() or str(args.betas).strip():
+        print(f"[KNN][INFO] --ks/--betas are ignored; using fixed config from {config_path.resolve()}")
+    print(f"[KNN][INFO] fixed k={fixed_k}, beta={fixed_beta}, late_q={fixed_late_q}")
 
     cfg = build_args(project_root, runtime_root, checkpoint_path, args.results_subdir)
     exp = Exp_Forecast(cfg)
@@ -430,41 +459,26 @@ def main() -> None:
     if args.distance != "cosine":
         raise NotImplementedError("Only cosine distance is supported in the first KNN validation.")
 
-    ks = [int(x) for x in str(args.ks).split(",") if str(x).strip()]
-    betas = [float(x) for x in str(args.betas).split(",") if str(x).strip()]
-    best_blend_name = ""
-    best_blend_mae = float("inf")
+    knn_pred = cosine_knn_predict(train_repr, train_targets, test_repr, k=fixed_k)
+    mode_knn = f"knn-only@k{fixed_k}"
+    knn_pred_full, _, _ = reconstruct_full_curve(knn_pred, test_targets, test_data, seq_len=seq_len)
+    knn_metrics = metrics_from_full_curve(knn_pred_full, true_raw_full, seq_len=seq_len)
+    overall_rows.append({"mode": mode_knn, **knn_metrics})
+    for row in stage_metrics(knn_pred_full, true_raw_full, stage_info):
+        stage_rows.append({"mode": mode_knn, **row})
+    pred_curves[mode_knn] = knn_pred_full
 
-    for k in ks:
-        knn_pred = cosine_knn_predict(train_repr, train_targets, test_repr, k=k)
-        mode_knn = f"knn-only@k{k}"
-        knn_pred_full, _, _ = reconstruct_full_curve(knn_pred, test_targets, test_data, seq_len=seq_len)
-        knn_metrics = metrics_from_full_curve(knn_pred_full, true_raw_full, seq_len=seq_len)
-        overall_rows.append({"mode": mode_knn, **knn_metrics})
-        for row in stage_metrics(knn_pred_full, true_raw_full, stage_info):
-            stage_rows.append({"mode": mode_knn, **row})
-        pred_curves[mode_knn] = knn_pred_full
-
-        for beta in betas:
-            blend_pred = (1.0 - beta) * head_pred + beta * knn_pred
-            mode_blend = f"blend@k{k}_b{str(beta).replace('.', '')}"
-            blend_pred_full, _, _ = reconstruct_full_curve(blend_pred, test_targets, test_data, seq_len=seq_len)
-            blend_metrics = metrics_from_full_curve(blend_pred_full, true_raw_full, seq_len=seq_len)
-            overall_rows.append({"mode": mode_blend, **blend_metrics})
-            for row in stage_metrics(blend_pred_full, true_raw_full, stage_info):
-                stage_rows.append({"mode": mode_blend, **row})
-            pred_curves[mode_blend] = blend_pred_full
-            if blend_metrics["mae_full_raw"] < best_blend_mae:
-                best_blend_mae = blend_metrics["mae_full_raw"]
-                best_blend_name = mode_blend
+    blend_pred = (1.0 - fixed_beta) * head_pred + fixed_beta * knn_pred
+    mode_blend = f"blend@k{fixed_k}_b{str(fixed_beta).replace('.', '')}"
+    blend_pred_full, _, _ = reconstruct_full_curve(blend_pred, test_targets, test_data, seq_len=seq_len)
+    blend_metrics = metrics_from_full_curve(blend_pred_full, true_raw_full, seq_len=seq_len)
+    overall_rows.append({"mode": mode_blend, **blend_metrics})
+    for row in stage_metrics(blend_pred_full, true_raw_full, stage_info):
+        stage_rows.append({"mode": mode_blend, **row})
+    pred_curves[mode_blend] = blend_pred_full
 
     overall_rows.sort(key=lambda x: x["mae_full_raw"])
-    best_curve_keys = ["head-only"]
-    if ks:
-        best_curve_keys.append(f"knn-only@k{ks[0]}")
-    if best_blend_name:
-        best_curve_keys.append(best_blend_name)
-    best_curve_keys = [k for k in best_curve_keys if k in pred_curves]
+    best_curve_keys = ["head-only", mode_knn, mode_blend]
     save_curve_plot(results_root / "wear_full_curve_knn_compare.png", true_raw_full, {k: pred_curves[k] for k in best_curve_keys}, seq_len)
 
     overall_path = results_root / "knn_fold1_overall_metrics.csv"
@@ -496,20 +510,23 @@ def main() -> None:
         wr.writeheader()
         wr.writerows(stage_rows)
 
-    write_summary_md(summary_path, overall_rows, stage_rows, best_blend_name)
+    write_summary_md(summary_path, overall_rows, stage_rows, mode_blend)
     manifest = {
         "runtime_root": str(runtime_root),
         "checkpoint_path": str(checkpoint_path),
         "distance": args.distance,
-        "ks": ks,
-        "betas": betas,
-        "best_blend_name": best_blend_name,
-        "best_blend_mae_full_raw": best_blend_mae,
+        "k": fixed_k,
+        "beta": fixed_beta,
+        "late_library_quantile": fixed_late_q,
+        "knn_config_path": str(config_path.resolve()),
+        "knn_config": knn_cfg,
+        "selected_blend_name": mode_blend,
+        "selected_blend_mae_full_raw": blend_metrics["mae_full_raw"],
     }
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"[KNN][OK] results_root={results_root}")
-    print(f"[KNN][OK] best_blend={best_blend_name} mae_full_raw={best_blend_mae:.4f}")
+    print(f"[KNN][OK] selected_blend={mode_blend} mae_full_raw={blend_metrics['mae_full_raw']:.4f}")
 
 
 if __name__ == "__main__":

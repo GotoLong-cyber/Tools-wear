@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "${PROJECT_ROOT}"
 
-PYTHON_BIN="/home/lc24/miniconda3/envs/TimerXL/bin/python"
+PYTHON_BIN="${PYTHON_BIN:-/home/jyc23/miniconda3/envs/TimerXL/bin/python}"
 unset CUDA_VISIBLE_DEVICES
 
 "${PYTHON_BIN}" - <<'PY'
@@ -14,11 +14,13 @@ assert torch.cuda.is_available(), "CUDA unavailable: A2+SE1 must run on GPU."
 print("[GPU][OK] cuda available")
 PY
 
-"${PYTHON_BIN}" "${PROJECT_ROOT}/feature_extraction/build_rms7_feat4_plus_se1.py" \
-  --project_root "${PROJECT_ROOT}" \
-  --runs c1 c4 c6 \
-  --out_dir "dataset/passlevel_tree_select/selected_rms7_plus_feat4_plus_se1" \
-  --channel_idx 0
+if [[ "${SKIP_FEATURE_BUILD:-0}" != "1" ]]; then
+  "${PYTHON_BIN}" "${PROJECT_ROOT}/feature_extraction/build_rms7_feat4_plus_se1.py" \
+    --project_root "${PROJECT_ROOT}" \
+    --runs c1 c4 c6 \
+    --out_dir "dataset/passlevel_tree_select/selected_rms7_plus_feat4_plus_se1" \
+    --channel_idx 0
+fi
 
 GPU_ID="${GPU_ID:-0}"
 RESULTS_SUBDIR="${RESULTS_SUBDIR:-20260324_A2PlusSE1}"
