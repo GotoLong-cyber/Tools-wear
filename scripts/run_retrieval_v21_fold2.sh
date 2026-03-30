@@ -7,6 +7,17 @@ cd "${PROJECT_ROOT}"
 
 PYTHON_BIN="${PYTHON_BIN:-/home/jyc23/miniconda3/envs/TimerXL/bin/python}"
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-1}"
+KNN_CONFIG="${KNN_CONFIG:-feature_alignment_diagnosis/scripts/knn_config.json}"
+
+if [[ "${KNN_BETAS:-0.5}" == *","* ]]; then
+  echo "ERROR: KNN_BETAS must be a single value, not a search grid." >&2
+  exit 1
+fi
+
+if [[ "${KNN_K:-5}" == *","* ]]; then
+  echo "ERROR: KNN_K must be a single value, not a search grid." >&2
+  exit 1
+fi
 
 "${PYTHON_BIN}" "${PROJECT_ROOT}/feature_alignment_diagnosis/scripts/run_retrieval_v21_infer.py" \
   --project_root "${PROJECT_ROOT}" \
@@ -16,8 +27,7 @@ export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-1}"
   --test_runs "c1" \
   --tag "fold2" \
   --results_subdir "${RESULTS_SUBDIR:-20260325_RetrievalV21_formal}" \
-  --k "${KNN_K:-5}" \
-  --betas "${KNN_BETAS:-0.5}" \
+  --knn_config "${KNN_CONFIG}" \
   --blend_mode "${KNN_BLEND_MODE:-delta_residual}" \
   --library_wear_threshold_um "${LIB_WEAR_THR:-0}" \
-  --library_wear_quantile "${LIB_WEAR_Q:-0.8}"
+  --gate_mode none

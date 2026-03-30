@@ -15,6 +15,7 @@ print("[GPU][OK] cuda available")
 PY
 
 if [[ "${SKIP_FEATURE_BUILD:-0}" != "1" ]]; then
+  echo "[WARN] Building features in single-fold mode. For 3-fold parallel training, use run_train_a2_se1_3fold_3gpu.sh to avoid redundant builds."
   "${PYTHON_BIN}" "${PROJECT_ROOT}/feature_extraction/build_rms7_feat4_plus_se1.py" \
     --project_root "${PROJECT_ROOT}" \
     --runs c1 c4 c6 \

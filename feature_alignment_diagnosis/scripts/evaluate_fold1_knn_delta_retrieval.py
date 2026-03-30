@@ -8,6 +8,7 @@ import csv
 import json
 from pathlib import Path
 import sys
+import warnings
 
 import numpy as np
 
@@ -258,6 +259,12 @@ def main() -> None:
         # WARNING:
         # gate_mode != "none" uses statistics from the whole test-window batch.
         # Keep this branch for exploratory analysis only; do not use it for formal claims.
+        warnings.warn(
+            "gate_mode != 'none' uses batch-level test statistics and is non-causal; "
+            "do not use for paper results.",
+            UserWarning,
+            stacklevel=2,
+        )
         gate_dist = min_dists if str(args.gate_stat) == "min" else mean_topk_dists
         beta_dyn = distance_to_dynamic_beta(
             gate_dist,
