@@ -1,0 +1,49 @@
+{
+  "generated_at": "2026-04-01 18:35:34",
+  "source_of_truth_files": [
+    "FeatureTest/paper_audit_inventory.md",
+    "FeatureTest/paper_evidence_gap_report.md",
+    "FeatureTest/paper_figure_plan.md",
+    "FeatureTest/paper_table_plan.md",
+    "FeatureTest/must_run_experiments.md",
+    "FeatureTest/paper_storyline.md",
+    "FeatureTest/paper_outline.md",
+    "FeatureTest/abstract_zh.md",
+    "FeatureTest/abstract_en.md",
+    "FeatureTest/intro_skeleton.md",
+    "FeatureTest/method_skeleton.md",
+    "FeatureTest/experiment_skeleton.md",
+    "FeatureTest/discussion_skeleton.md",
+    "FeatureTest/conclusion_skeleton.md",
+    "FeatureTest/codex_execution_todo.md",
+    "FeatureTest/paper_master_plan.md"
+  ],
+  "formal_pipeline": {
+    "backbone": "TimerXL",
+    "auxiliary": "TMA / A2 random stride-2 train-time augmentation",
+    "main_innovation": "KNN-DRR / Retrieval V2.1",
+    "formal_result_dir": "results/20260401_RetrievalV21_innerlososelect",
+    "reference_cleanfixed_dir": "results/20260401_RetrievalV21_cleanformal",
+    "selection_protocol": "inner leave-one-source-out validation on source conditions only",
+    "selected_global_knn_config": {
+      "k": 10,
+      "beta": 0.7,
+      "late_q": 0.0
+    },
+    "deprecated_dirs": [
+      "results/20260325_KNNGate3Fold",
+      "scripts/run_fold*_a2_stagealign_seed2026.sh",
+      "feature_alignment_diagnosis/scripts/build_a2_stage_aligned_fold1_data.py"
+    ]
+  },
+  "protocol_checks": {
+    "legacy_test_loss_codepath_present": true,
+    "formal_clean_wrappers_disable_train_test_eval": true,
+    "early_stopping_uses_val_loss": true,
+    "retrieval_hparams_fixed": true,
+    "gated_retrieval_excluded": true,
+    "stage_align_excluded": true,
+    "val_test_stride_one_in_formal_wrappers": true,
+    "inner_loso_train_only_selection": true
+  }
+}

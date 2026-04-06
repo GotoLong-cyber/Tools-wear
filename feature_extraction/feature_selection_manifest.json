@@ -1,0 +1,50 @@
+{
+  "version": "2026-03-30",
+  "method": "StageA_stability + StageB_predictive (train-only) + orthogonal feature branch",
+  "train_only": true,
+  "train_runs": [
+    "c1",
+    "c4"
+  ],
+  "generated_from": [
+    "scripts/round_stageA_stability_20260316/code/stageA_stability_filter.py",
+    "scripts/round_stageA_stability_20260316/code/stageB_predictive_select.py"
+  ],
+  "source_artifacts": [
+    "dataset/passlevel_tree_select/selected_td28_k16/selection_meta.json",
+    "dataset/passlevel_tree_select/selected_rms7_plus_feat4_plus_se1/*.npz"
+  ],
+  "BASE_KEEP_IDX": [
+    2,
+    6,
+    10,
+    14,
+    18,
+    22,
+    26,
+    3
+  ],
+  "BASE_KEEP_NAMES": [
+    "Feat_3",
+    "Feat_7",
+    "Feat_11",
+    "Feat_15",
+    "Feat_19",
+    "Feat_23",
+    "Feat_27",
+    "Feat_4"
+  ],
+  "SE1_idx": 8,
+  "fold1_selected": [
+    "Feat_3",
+    "Feat_7",
+    "Feat_11",
+    "Feat_15",
+    "Feat_19",
+    "Feat_23",
+    "Feat_27",
+    "Feat_4",
+    "SPECTRAL_ENTROPY_CH1"
+  ],
+  "note": "BASE_KEEP comes from train-only selection lineage. SE1 is an orthogonal feature candidate validated after A2, not selected from test data."
+}

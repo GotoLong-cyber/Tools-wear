@@ -152,6 +152,7 @@ def main() -> None:
     parser.add_argument("--test_runs", type=str, default="c6")
     parser.add_argument("--tag", type=str, default="fold1")
     parser.add_argument("--knn_config", type=Path, default=DEFAULT_KNN_CONFIG)
+    parser.add_argument("--wear_agg", type=str, default="max", choices=["max", "mean"])
     args = parser.parse_args()
 
     project_root = args.project_root.resolve()
@@ -165,7 +166,7 @@ def main() -> None:
         print(f"[KNN-DELTA][INFO] --betas is ignored; using fixed config from {config_path.resolve()}")
     print(f"[KNN-DELTA][INFO] fixed k={fixed_k}, beta={fixed_beta}, late_q={fixed_late_q}")
 
-    cfg = build_args(project_root, runtime_root, checkpoint_path, args.results_subdir)
+    cfg = build_args(project_root, runtime_root, checkpoint_path, args.results_subdir, wear_agg=args.wear_agg)
     cfg.train_runs = str(args.train_runs)
     cfg.test_runs = str(args.test_runs)
     exp = Exp_Forecast(cfg)

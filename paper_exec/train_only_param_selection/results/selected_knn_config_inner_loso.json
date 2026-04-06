@@ -1,0 +1,9 @@
+{
+  "k": 10,
+  "beta": 0.7,
+  "late_library_quantile": 0.0,
+  "selection_metric": "mae_full_raw",
+  "selection_protocol": "inner leave-one-source-run-out validation across source-domain runs",
+  "selection_source": "paper_exec/train_only_param_selection/results/inner_loso_knn_global_summary.csv",
+  "note": "Selected without using outer test folds; query runs are held-out source runs only."
+}

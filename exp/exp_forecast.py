@@ -540,7 +540,10 @@ class Exp_Forecast(Exp_Basic):
         train_data = train_bundle["train_data"]
         train_loader = train_bundle["train_loader"]
         vali_data, vali_loader = self._get_data(flag='val')
-        test_data, test_loader = self._get_data(flag='test')
+        use_epoch_test_eval = not bool(getattr(self.args, "disable_train_test_eval", False))
+        test_data, test_loader = (None, None)
+        if use_epoch_test_eval:
+            test_data, test_loader = self._get_data(flag='test')
         
         path = os.path.join(self.args.checkpoints, setting)
         if (self.args.ddp and self.args.local_rank == 0) or not self.args.ddp:
@@ -683,10 +686,15 @@ class Exp_Forecast(Exp_Basic):
                     print(f"[DualLoader][Epoch {epoch + 1}] batch_count_by_run={source_batch_counter}")
 
             vali_loss = self.vali(vali_data, vali_loader, criterion, is_test=self.args.valid_last)
-            test_loss = self.vali(test_data, test_loader, criterion, is_test=True)
-            if (self.args.ddp and self.args.local_rank == 0) or not self.args.ddp:
-                print("Epoch: {}, Steps: {} | Vali Loss: {:.7f} Test Loss: {:.7f}".format(
-                    epoch + 1, train_steps, vali_loss, test_loss))
+            if use_epoch_test_eval:
+                test_loss = self.vali(test_data, test_loader, criterion, is_test=True)
+                if (self.args.ddp and self.args.local_rank == 0) or not self.args.ddp:
+                    print("Epoch: {}, Steps: {} | Vali Loss: {:.7f} Test Loss: {:.7f}".format(
+                        epoch + 1, train_steps, vali_loss, test_loss))
+            else:
+                if (self.args.ddp and self.args.local_rank == 0) or not self.args.ddp:
+                    print("Epoch: {}, Steps: {} | Vali Loss: {:.7f} | Test Loss: DISABLED_BY_PROTOCOL".format(
+                        epoch + 1, train_steps, vali_loss))
             early_stopping(vali_loss, self.model, path)
             if early_stopping.early_stop:
                 if (self.args.ddp and self.args.local_rank == 0) or not self.args.ddp:

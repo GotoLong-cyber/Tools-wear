@@ -1,0 +1,4 @@
+fold,selected_k,selected_beta,selected_late_q,selected_mode,selected_metric
+fold1,10,0.7,0.0,delta-blend@k10_b07,8.91580867767334
+fold2,3,0.3,0.0,delta-blend@k3_b03,23.63199234008789
+fold3,3,0.3,0.0,delta-blend@k3_b03,33.379024505615234

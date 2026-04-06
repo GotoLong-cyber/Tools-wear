@@ -1,0 +1,5 @@
+method,backbone_type,fold,mae_full_raw,protocol_status,notes
+LSTM,scratch,fold1,,TODO,Missing baseline
+Transformer-from-scratch,scratch,fold1,,TODO,Missing baseline
+TimerXL head-only,foundation,fold1,13.398430824279785,formal-ready,Clean TimerXL baseline
+TimerXL + KNN-DRR,foundation+retrieval,fold1,3.2064666748046875,formal-ready,Inner-LOSO-selected formal retrieval result

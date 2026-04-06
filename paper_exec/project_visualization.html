@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PHM2010 刀具磨损预测项目可视化</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --panel: #fffdf8;
+      --ink: #1f2a24;
+      --muted: #5c685f;
+      --line: #d9d2c3;
+      --accent: #005f73;
+      --accent-2: #b85c38;
+      --accent-3: #7a9e7e;
+      --accent-4: #d9a441;
+      --shadow: 0 12px 30px rgba(31, 42, 36, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top right, rgba(0, 95, 115, 0.1), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(184, 92, 56, 0.1), transparent 22%),
+        var(--bg);
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .page {
+      width: min(1380px, calc(100% - 32px));
+      margin: 24px auto 48px;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 20px;
+    }
+
+    .sidebar, .panel {
+      background: var(--panel);
+      border: 1px solid rgba(217, 210, 195, 0.85);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+      padding: 22px 18px;
+    }
+
+    .brand {
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 18px;
+    }
+
+    .brand h1 {
+      font-size: 24px;
+      line-height: 1.2;
+      margin: 0 0 8px;
+    }
+
+    .brand p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .nav {
+      display: grid;
+      gap: 10px;
+    }
+
+    .nav a {
+      padding: 10px 12px;
+      border-radius: 12px;
+      color: var(--ink);
+      background: rgba(0, 95, 115, 0.04);
+      border: 1px solid transparent;
+      font-size: 14px;
+    }
+
+    .nav a:hover {
+      border-color: rgba(0, 95, 115, 0.2);
+      text-decoration: none;
+    }
+
+    .main {
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero {
+      overflow: hidden;
+      position: relative;
+      padding: 28px;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, rgba(0, 95, 115, 0.95), rgba(14, 90, 63, 0.88)),
+        linear-gradient(35deg, rgba(184, 92, 56, 0.35), transparent 55%);
+      z-index: 0;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      color: #f6fbfb;
+      display: grid;
+      gap: 20px;
+    }
+
+    .hero h2 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.08;
+      max-width: 820px;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 920px;
+      color: rgba(246, 251, 251, 0.88);
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .metric-card {
+      background: rgba(255, 255, 255, 0.11);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .metric-card .label {
+      font-size: 13px;
+      color: rgba(246, 251, 251, 0.8);
+      margin-bottom: 6px;
+    }
+
+    .metric-card .value {
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .metric-card .hint {
+      font-size: 12px;
+      color: rgba(246, 251, 251, 0.78);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .section {
+      padding: 22px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    .section h3 {
+      margin: 0 0 6px;
+      font-size: 24px;
+    }
+
+    .section p.lead {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+      max-width: 760px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button, select {
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-size: 14px;
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    button.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .chart-card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(0, 95, 115, 0.03), rgba(0, 95, 115, 0));
+      padding: 16px;
+    }
+
+    .chart-caption {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 16px;
+    }
+
+    .insight-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .insight {
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .insight strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 15px;
+    }
+
+    .insight span {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .thumb {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: white;
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .thumb:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .thumb img {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.06);
+      background: #f2f2f2;
+    }
+
+    .thumb h4 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .thumb p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .table-links {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .table-link {
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: white;
+    }
+
+    .table-link h4 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .table-link p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(8, 18, 22, 0.78);
+      z-index: 50;
+      padding: 24px;
+    }
+
+    .modal.open { display: flex; }
+
+    .modal-box {
+      width: min(1100px, 100%);
+      max-height: 92vh;
+      overflow: auto;
+      background: #fffefb;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+    }
+
+    .modal-box img {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 14px;
+    }
+
+    .modal-head h4 {
+      margin: 0 0 6px;
+      font-size: 22px;
+    }
+
+    .modal-head p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .close-btn {
+      border-radius: 999px;
+      padding: 8px 12px;
+      min-width: 80px;
+    }
+
+    .footer-note {
+      padding: 0 4px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 1180px) {
+      .page { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .grid-2, .hero-grid, .gallery, .table-links { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>项目可视化总览</h1>
+        <p>PHM2010 小样本跨工况刀具磨损预测。当前页面仅使用已经锁定的 formal-ready 主文资产与正式 CSV 结果。</p>
+      </div>
+      <nav class="nav">
+        <a href="#hero">项目概览</a>
+        <a href="#main-results">主结果链</a>
+        <a href="#hardest-fold">代表性困难场景</a>
+        <a href="#retrieval">检索消融</a>
+        <a href="#tma">TMA 机制</a>
+        <a href="#gallery">主图画廊</a>
+        <a href="#assets">正文资产</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <section class="panel hero" id="hero">
+        <div class="hero-inner">
+          <div>
+            <h2>TimerXL + TMA + KNN-DRR 项目总览</h2>
+            <p>
+              本项目围绕 PHM2010 的 few-shot cross-condition 刀具磨损预测展开。核心问题链条为：
+              工况间磨损速率差异导致时间尺度错位，时间尺度错位进一步诱发 late-stage future-increment underestimation。
+              方法层级固定为 TimerXL 作为 backbone、TMA 作为训练期辅助增强、KNN-DRR 作为主创新的残差检索修正模块。
+            </p>
+          </div>
+          <div class="hero-grid">
+            <div class="metric-card">
+              <div class="label">三折平均 MAE</div>
+              <div class="value" id="hero-avg-mae">3.1784</div>
+              <div class="hint">TimerXL + TMA + KNN-DRR 的 formal-ready 主结果</div>
+            </div>
+            <div class="metric-card">
+              <div class="label">三折平均 RMSE</div>
+              <div class="value" id="hero-avg-rmse">3.9763</div>
+              <div class="hint">来源于当前正式主线 CSV</div>
+            </div>
+            <div class="metric-card">
+              <div class="label">相对 Baseline 改善</div>
+              <div class="value" id="hero-improve">63.8%</div>
+              <div class="hint">相对于 TimerXL head-only 的平均 MAE 降幅</div>
+            </div>
+            <div class="metric-card">
+              <div class="label">正式检索配置</div>
+              <div class="value" style="font-size:24px">k=10 β=0.7</div>
+              <div class="hint">inner LOSO train-only 选出，outer test 不调参，late_q=0.0</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel section" id="main-results">
+        <div class="section-head">
+          <div>
+            <h3>主结果链</h3>
+            <p class="lead">同一套 formal-ready 证据下，页面展示 TimerXL head-only、TimerXL + TMA、TimerXL + TMA + KNN-DRR 三步结果链。你可以切换 MAE 与 RMSE 观察不同折次的变化。</p>
+          </div>
+          <div class="controls">
+            <button class="metric-toggle active" data-metric="mae_full_raw">MAE</button>
+            <button class="metric-toggle" data-metric="rmse_full_raw">RMSE</button>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="chart-card">
+            <svg id="main-chart" viewBox="0 0 860 420" width="100%" aria-label="主结果图"></svg>
+            <div class="chart-caption" id="main-caption"></div>
+          </div>
+          <div class="insight-list" id="main-insights"></div>
+        </div>
+      </section>
+
+      <section class="panel section" id="hardest-fold">
+        <div class="section-head">
+          <div>
+            <h3>代表性困难场景与阶段误差</h3>
+            <p class="lead">代表性困难场景是评估之后识别出的实验发现，而不是设计先验。这里聚焦 fold1，显示 late-stage underestimation 如何被残差修正显著压低。</p>
+          </div>
+          <div class="controls">
+            <button class="stage-toggle active" data-kind="mae">阶段 MAE</button>
+            <button class="stage-toggle" data-kind="residual">Mean Residual</button>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="chart-card">
+            <svg id="stage-chart" viewBox="0 0 860 420" width="100%" aria-label="阶段误差图"></svg>
+            <div class="chart-caption" id="stage-caption"></div>
+          </div>
+          <div class="insight-list" id="stage-insights"></div>
+        </div>
+      </section>
+
+      <section class="panel section" id="retrieval">
+        <div class="section-head">
+          <div>
+            <h3>检索消融</h3>
+            <p class="lead">检索模块的正式主线不是直接用邻居替代预测，而是使用 delta residual correction。你可以切换折次，比较 head-only、knn-only、delta-knn-only 和 delta-blend 的误差结构。</p>
+          </div>
+          <div class="controls">
+            <select id="retrieval-fold-select">
+              <option value="fold1">fold1 · c1,c4 → c6</option>
+              <option value="fold2">fold2 · c4,c6 → c1</option>
+              <option value="fold3">fold3 · c1,c6 → c4</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="chart-card">
+            <svg id="retrieval-chart" viewBox="0 0 860 420" width="100%" aria-label="检索消融图"></svg>
+            <div class="chart-caption" id="retrieval-caption"></div>
+          </div>
+          <div class="insight-list" id="retrieval-insights"></div>
+        </div>
+      </section>
+
+      <section class="panel section" id="tma">
+        <div class="section-head">
+          <div>
+            <h3>TMA 机制与检索可用性</h3>
+            <p class="lead">TMA 不是最终预测源，而是训练期辅助增强。它先改善跨速率表示可比性，再提升后续检索对未来磨损增量修正的可用性。</p>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="chart-card">
+            <svg id="tma-chart" viewBox="0 0 860 420" width="100%" aria-label="TMA 图"></svg>
+            <div class="chart-caption" id="tma-caption"></div>
+          </div>
+          <div class="insight-list" id="tma-insights"></div>
+        </div>
+      </section>
+
+      <section class="panel section" id="gallery">
+        <div class="section-head">
+          <div>
+            <h3>主图画廊</h3>
+            <p class="lead">下方均来自已经锁定的 Fig01–Fig07。点击卡片可放大查看，并从同一位置进入 PDF 原件。</p>
+          </div>
+        </div>
+        <div class="gallery" id="figure-gallery"></div>
+      </section>
+
+      <section class="panel section" id="assets">
+        <div class="section-head">
+          <div>
+            <h3>正文资产索引</h3>
+            <p class="lead">这些链接对应当前已经锁定的主文表格与索引文件，可以直接用于写作跳转与核对。</p>
+          </div>
+        </div>
+        <div class="table-links" id="table-links"></div>
+        <div class="mini-note">
+          页面使用的是 formal-ready 主文资产，不包含 appendix-only 或 exploratory 结果。若后续结果源变更，应同步更新这里的内嵌数据与跳转链接。
+        </div>
+      </section>
+
+      <div class="footer-note">
+        页面路径：
+        <code>/home/jyc23/zml25/Timer/FeatureExact3.10/FeatureTest/OpenLTM/paper_exec/project_visualization.html</code>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal" id="image-modal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div>
+          <h4 id="modal-title"></h4>
+          <p id="modal-caption"></p>
+        </div>
+        <button class="close-btn" id="modal-close">关闭</button>
+      </div>
+      <img id="modal-image" src="" alt="">
+      <p class="mini-note"><a id="modal-pdf" href="" target="_blank" rel="noopener">打开 PDF 原图</a></p>
+    </div>
+  </div>
+
+  <script>
+    const mainResults = [
+      { method: "TimerXL head-only", fold: "fold1", mae_full_raw: 13.398430824279785, rmse_full_raw: 20.436194888565666 },
+      { method: "TimerXL + TMA", fold: "fold1", mae_full_raw: 9.276140213012695, rmse_full_raw: 17.59681731837687 },
+      { method: "TimerXL + TMA + KNN-DRR", fold: "fold1", mae_full_raw: 3.2064666748046875, rmse_full_raw: 4.158579008888607 },
+      { method: "TimerXL head-only", fold: "fold2", mae_full_raw: 6.974664688110352, rmse_full_raw: 8.613006656620682 },
+      { method: "TimerXL + TMA", fold: "fold2", mae_full_raw: 3.7426395416259766, rmse_full_raw: 4.521605441818688 },
+      { method: "TimerXL + TMA + KNN-DRR", fold: "fold2", mae_full_raw: 3.3330025672912598, rmse_full_raw: 4.0985247307124695 },
+      { method: "TimerXL head-only", fold: "fold3", mae_full_raw: 5.940085411071777, rmse_full_raw: 6.874859895145563 },
+      { method: "TimerXL + TMA", fold: "fold3", mae_full_raw: 5.426422595977783, rmse_full_raw: 6.270470626666136 },
+      { method: "TimerXL + TMA + KNN-DRR", fold: "fold3", mae_full_raw: 2.995772123336792, rmse_full_raw: 3.671849806678865 },
+      { method: "TimerXL head-only", fold: "avg", mae_full_raw: 8.771060307820639, rmse_full_raw: 11.974687146777304 },
+      { method: "TimerXL + TMA", fold: "avg", mae_full_raw: 6.148400783538818, rmse_full_raw: 9.462964462287232 },
+      { method: "TimerXL + TMA + KNN-DRR", fold: "avg", mae_full_raw: 3.1784137884775796, rmse_full_raw: 3.976317848759981 }
+    ];
+
+    const retrievalAblation = [
+      { fold: "fold1", mode: "head-only", mae: 9.24558162689209, rmse: 15.087096080414165 },
+      { fold: "fold1", mode: "knn-only@k10", mae: 25.83344268798828, rmse: 40.54269457014189 },
+      { fold: "fold1", mode: "delta-knn-only@k10", mae: 2.515413284301758, rmse: 3.2809942236619567 },
+      { fold: "fold1", mode: "delta-blend@k10_b07", mae: 3.2064666748046875, rmse: 4.158579008888607 },
+      { fold: "fold2", mode: "head-only", mae: 4.199134349822998, rmse: 4.880544395098696 },
+      { fold: "fold2", mode: "knn-only@k10", mae: 3.894869089126587, rmse: 4.568588375045468 },
+      { fold: "fold2", mode: "delta-knn-only@k10", mae: 3.2062394618988037, rmse: 4.21519218468252 },
+      { fold: "fold2", mode: "delta-blend@k10_b07", mae: 3.3330025672912598, rmse: 4.0985247307124695 },
+      { fold: "fold3", mode: "head-only", mae: 4.8541717529296875, rmse: 5.661674806538277 },
+      { fold: "fold3", mode: "knn-only@k10", mae: 4.565614700317383, rmse: 5.449872902604336 },
+      { fold: "fold3", mode: "delta-knn-only@k10", mae: 2.4314849376678467, rmse: 3.1915809088623996 },
+      { fold: "fold3", mode: "delta-blend@k10_b07", mae: 2.995772123336792, rmse: 3.671849806678865 }
+    ];
+
+    const stageData = {
+      mae: [
+        { mode: "baseline_head-only", early: 3.470956802368164, mid: 4.2950439453125, late: 32.43019485473633 },
+        { mode: "tma_head-only", early: 0.3925352692604065, mid: 1.7414809465408325, late: 25.695030212402344 },
+        { mode: "head-only", early: 3.632491111755371, mid: 2.886276960372925, late: 21.217979431152344 },
+        { mode: "delta-blend@k10_b07", early: 2.6388416290283203, mid: 1.2025070190429688, late: 5.778050899505615 }
+      ],
+      residual: [
+        { mode: "baseline_head-only", early: 2.285464286804199, mid: -0.3120376467704773, late: -32.43019485473633 },
+        { mode: "tma_head-only", early: 0.20590732991695404, mid: 0.5641604661941528, late: -24.998340606689453 },
+        { mode: "head-only", early: 3.632491111755371, mid: 2.886276960372925, late: -20.47682762145996 },
+        { mode: "delta-blend@k10_b07", early: 2.6388416290283203, mid: 0.2782399356365204, late: -5.778050899505615 }
+      ]
+    };
+
+    const tmaAblation = [
+      { fold: "fold1", setting: "No TMA", mae: 13.398430824279785, late: 32.43019485473633 },
+      { fold: "fold1", setting: "+ TMA only", mae: 9.276140213012695, late: 25.695030212402344 },
+      { fold: "fold1", setting: "+ TMA + KNN-DRR", mae: 3.2064666748046875, late: 5.778050899505615 },
+      { fold: "fold2", setting: "No TMA", mae: 6.974664688110352, late: 13.160486221313477 },
+      { fold: "fold2", setting: "+ TMA only", mae: 3.7426395416259766, late: 5.0355682373046875 },
+      { fold: "fold2", setting: "+ TMA + KNN-DRR", mae: 3.3330025672912598, late: 4.996880531311035 },
+      { fold: "fold3", setting: "No TMA", mae: 5.940085411071777, late: 6.893298625946045 },
+      { fold: "fold3", setting: "+ TMA only", mae: 5.426422595977783, late: 6.257275581359863 },
+      { fold: "fold3", setting: "+ TMA + KNN-DRR", mae: 2.995772123336792, late: 3.551478624343872 }
+    ];
+
+    const retrievalQuality = [
+      { fold: "fold1", baselineDeltaLate: 3.3159596920013428, tmaDeltaLate: 3.293001890182495, baselineTop1: 0.0979212149977684, tmaTop1: 0.12561410665512085 },
+      { fold: "fold2", baselineDeltaLate: 4.82243537902832, tmaDeltaLate: 3.771737575531006, baselineTop1: 0.0037973844446241856, tmaTop1: 0.004649452865123749 },
+      { fold: "fold3", baselineDeltaLate: 3.767033338546753, tmaDeltaLate: 3.5368709564208984, baselineTop1: 0.0029949164018034935, tmaTop1: 0.003503679996356368 }
+    ];
+
+    const figures = [
+      {
+        id: "Fig.1",
+        title: "三工况磨损演化与时间尺度错位",
+        img: "final_main_assets/figures/Fig01_wear_progression_three_conditions.png",
+        pdf: "final_main_assets/figures/Fig01_wear_progression_three_conditions.pdf",
+        caption: "PHM2010 三个工况下的磨损演化曲线及其时间尺度错位现象。不同工况在相同切削步下并不对应相同磨损阶段。"
+      },
+      {
+        id: "Fig.2",
+        title: "方法框架",
+        img: "final_main_assets/figures/Fig02_framework_overview.png",
+        pdf: "final_main_assets/figures/Fig02_framework_overview.pdf",
+        caption: "本文方法框架，包括 TimerXL backbone、TMA 训练期增强和 KNN-DRR 残差检索修正。"
+      },
+      {
+        id: "Fig.3",
+        title: "代表性困难折的逐步改进",
+        img: "final_main_assets/figures/Fig03_hardest_fold_progressive_compare.png",
+        pdf: "final_main_assets/figures/Fig03_hardest_fold_progressive_compare.pdf",
+        caption: "代表性困难折上从 TimerXL head-only 到 TMA 再到 KNN-DRR 的逐步预测改进曲线。"
+      },
+      {
+        id: "Fig.4",
+        title: "三折全曲线对比",
+        img: "final_main_assets/figures/Fig04_three_fold_curve_compare.png",
+        pdf: "final_main_assets/figures/Fig04_three_fold_curve_compare.pdf",
+        caption: "三折 LOCO 评估中，TimerXL head-only 与 KNN-DRR 的全曲线对比结果。"
+      },
+      {
+        id: "Fig.5",
+        title: "晚期残差修正",
+        img: "final_main_assets/figures/Fig05_late_stage_residual_correction.png",
+        pdf: "final_main_assets/figures/Fig05_late_stage_residual_correction.pdf",
+        caption: "代表性困难折的分段 MAE 与 mean residual 对比。KNN-DRR 主要修正 late-stage residual bias。"
+      },
+      {
+        id: "Fig.6",
+        title: "TMA 前后检索质量",
+        img: "final_main_assets/figures/Fig06_retrieval_quality_before_after_tma.png",
+        pdf: "final_main_assets/figures/Fig06_retrieval_quality_before_after_tma.pdf",
+        caption: "TMA 前后检索质量指标对比，包括距离、late-library 命中率与 late-stage delta error。"
+      },
+      {
+        id: "Fig.7",
+        title: "协议边界",
+        img: "final_main_assets/figures/Fig07_protocol_boundary.png",
+        pdf: "final_main_assets/figures/Fig07_protocol_boundary.pdf",
+        caption: "train/validation/test 的协议边界示意图。正式主结果严格遵守 train-only library construction、inner LOSO 选参和 outer test 单次评估。"
+      }
+    ];
+
+    const tables = [
+      { id: "Table 1", title: "数据集与实验协议", file: "final_main_assets/tables/表1_数据集与协议.md", note: "三折 LOCO，TMA 仅作用于训练期，验证与测试固定 stride=1。" },
+      { id: "Table 2", title: "主结果", file: "final_main_assets/tables/表2_主结果.md", note: "正式主线的三步结果链与平均指标。" },
+      { id: "Table 3", title: "代表性困难场景", file: "final_main_assets/tables/表3_最困难场景.md", note: "fold1 中逐步引入 TMA 和 KNN-DRR 的详细结果。" },
+      { id: "Table 4", title: "分阶段误差分解", file: "final_main_assets/tables/表4_阶段残差对比.md", note: "late-stage 是最主要的误差来源，KNN-DRR 可显著修正。" },
+      { id: "Table 5", title: "Retrieval 消融", file: "final_main_assets/tables/表5_检索消融.md", note: "delta-blend 是正式主线模式，inner LOSO 决定固定配置。" },
+      { id: "Table 6", title: "TMA 消融", file: "final_main_assets/tables/表6_TMA消融.md", note: "TMA 自身改善基础结果，但主要价值体现在为后续检索净化空间。" }
+    ];
+
+    const palette = {
+      "TimerXL head-only": "#B85C38",
+      "TimerXL + TMA": "#7A9E7E",
+      "TimerXL + TMA + KNN-DRR": "#005F73",
+      "baseline_head-only": "#B85C38",
+      "tma_head-only": "#7A9E7E",
+      "head-only": "#AA6A4C",
+      "knn-only@k10": "#D9A441",
+      "delta-knn-only@k10": "#48716D",
+      "delta-blend@k10_b07": "#005F73",
+      "No TMA": "#B85C38",
+      "+ TMA only": "#7A9E7E",
+      "+ TMA + KNN-DRR": "#005F73"
+    };
+
+    const methodOrder = ["TimerXL head-only", "TimerXL + TMA", "TimerXL + TMA + KNN-DRR"];
+    const foldOrder = ["fold1", "fold2", "fold3", "avg"];
+    const foldLabels = { fold1: "fold1", fold2: "fold2", fold3: "fold3", avg: "avg" };
+    let currentMetric = "mae_full_raw";
+    let currentStageKind = "mae";
+
+    function fmt(value, digits = 4) {
+      return Number(value).toFixed(digits);
+    }
+
+    function drawGroupedBarChart(svgId, categories, series, yLabel, options = {}) {
+      const svg = document.getElementById(svgId);
+      const width = 860, height = 420;
+      const pad = { top: 28, right: 28, bottom: 70, left: 70 };
+      const plotW = width - pad.left - pad.right;
+      const plotH = height - pad.top - pad.bottom;
+      const flat = series.flatMap(s => s.values);
+      const maxVal = Math.max(...flat) * 1.15 || 1;
+      const innerPad = options.innerPad ?? 10;
+      const groupW = plotW / categories.length;
+      const barW = (groupW - innerPad * 2) / series.length;
+
+      let html = `
+        <rect x="0" y="0" width="${width}" height="${height}" fill="transparent"></rect>
+        <line x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}" stroke="#c9c0ae" stroke-width="1.2"></line>
+        <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${height - pad.bottom}" stroke="#c9c0ae" stroke-width="1.2"></line>
+      `;
+
+      for (let i = 0; i <= 5; i++) {
+        const yVal = (maxVal / 5) * i;
+        const y = height - pad.bottom - (plotH * i / 5);
+        html += `
+          <line x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}" stroke="rgba(0,0,0,0.08)" stroke-dasharray="4 5"></line>
+          <text x="${pad.left - 10}" y="${y + 4}" text-anchor="end" font-size="12" fill="#5c685f">${fmt(yVal, 1)}</text>
+        `;
+      }
+
+      categories.forEach((cat, ci) => {
+        const x0 = pad.left + ci * groupW + innerPad;
+        html += `<text x="${pad.left + ci * groupW + groupW / 2}" y="${height - pad.bottom + 26}" text-anchor="middle" font-size="13" fill="#1f2a24">${cat}</text>`;
+        series.forEach((s, si) => {
+          const val = s.values[ci];
+          const h = Math.max(2, (val / maxVal) * plotH);
+          const x = x0 + si * barW;
+          const y = height - pad.bottom - h;
+          html += `
+            <g>
+              <title>${s.label} · ${cat}: ${fmt(val, 4)}</title>
+              <rect x="${x}" y="${y}" width="${barW - 6}" height="${h}" rx="8" fill="${s.color}"></rect>
+            </g>
+          `;
+        });
+      });
+
+      html += `<text x="18" y="${pad.top}" font-size="12" fill="#5c685f">${yLabel}</text>`;
+
+      const legendY = 18;
+      let legendX = pad.left;
+      series.forEach((s) => {
+        html += `
+          <rect x="${legendX}" y="${legendY}" width="14" height="14" rx="4" fill="${s.color}"></rect>
+          <text x="${legendX + 20}" y="${legendY + 12}" font-size="12" fill="#1f2a24">${s.label}</text>
+        `;
+        legendX += s.label.length * 7.4 + 62;
+      });
+
+      svg.innerHTML = html;
+    }
+
+    function renderMainSection() {
+      const series = methodOrder.map(method => ({
+        label: method,
+        color: palette[method],
+        values: foldOrder.map(fold => mainResults.find(r => r.method === method && r.fold === fold)[currentMetric])
+      }));
+      drawGroupedBarChart("main-chart", foldOrder.map(f => foldLabels[f]), series, currentMetric === "mae_full_raw" ? "MAE (μm)" : "RMSE (μm)");
+
+      const avgBaseline = mainResults.find(r => r.method === "TimerXL head-only" && r.fold === "avg")[currentMetric];
+      const avgFinal = mainResults.find(r => r.method === "TimerXL + TMA + KNN-DRR" && r.fold === "avg")[currentMetric];
+      const reduction = ((avgBaseline - avgFinal) / avgBaseline) * 100;
+      document.getElementById("main-caption").textContent =
+        `当前显示 ${currentMetric === "mae_full_raw" ? "MAE" : "RMSE"}。在正式主线下，完整方法相对 head-only 的平均降幅为 ${fmt(reduction, 1)}%。`;
+
+      const insights = [
+        {
+          title: "三步结果链稳定成立",
+          body: `三折平均 ${currentMetric === "mae_full_raw" ? "MAE" : "RMSE"} 从 ${fmt(avgBaseline)} 降到 ${fmt(mainResults.find(r => r.method === "TimerXL + TMA" && r.fold === "avg")[currentMetric])}，再降到 ${fmt(avgFinal)}。`
+        },
+        {
+          title: "TMA 与 KNN-DRR 提供互补收益",
+          body: "TMA 先改善表示可比性，KNN-DRR 再对未来磨损增量残差进行显式修正，二者不是重复机制。"
+        },
+        {
+          title: "TimerXL 不是终点",
+          body: "仅靠 backbone 不能消除跨工况结构性误差；完整性能提升依赖训练期增强与检索残差修正的组合。"
+        }
+      ];
+      document.getElementById("main-insights").innerHTML = insights.map(i =>
+        `<div class="insight"><strong>${i.title}</strong><span>${i.body}</span></div>`
+      ).join("");
+    }
+
+    function renderStageSection() {
+      const series = stageData[currentStageKind].map(item => ({
+        label: item.mode,
+        color: palette[item.mode],
+        values: [Math.abs(item.early), Math.abs(item.mid), Math.abs(item.late)]
+      }));
+      drawGroupedBarChart("stage-chart", ["early", "mid", "late"], series, currentStageKind === "mae" ? "MAE (μm)" : "|Mean Residual| (μm)");
+
+      const caption = currentStageKind === "mae"
+        ? "fold1 的阶段 MAE 明确显示 late-stage 是主要误差来源；delta-blend 将该阶段误差从 21.2180 μm 压到 5.7781 μm。"
+        : "fold1 的 mean residual 显示 late-stage 存在明显负向偏差；KNN-DRR 将残差绝对值显著缩小。";
+      document.getElementById("stage-caption").textContent = caption;
+
+      const insights = [
+        {
+          title: "困难场景是实验发现",
+          body: "这里展示的是代表性困难折，用于最清楚地观察 late-stage underestimation，而不是方法设计先验。"
+        },
+        {
+          title: "误差并非全局均匀分布",
+          body: "head-only 的 early 与 mid 误差远低于 late-stage，说明主问题集中在高磨损区间的未来增量低估。"
+        },
+        {
+          title: "KNN-DRR 修正的是结构性残差",
+          body: "delta-blend 并非简单平移整条曲线，而是针对晚期 future increment residual bias 进行定向纠偏。"
+        }
+      ];
+      document.getElementById("stage-insights").innerHTML = insights.map(i =>
+        `<div class="insight"><strong>${i.title}</strong><span>${i.body}</span></div>`
+      ).join("");
+    }
+
+    function renderRetrievalSection() {
+      const fold = document.getElementById("retrieval-fold-select").value;
+      const rows = retrievalAblation.filter(r => r.fold === fold);
+      const series = [{
+        label: "MAE",
+        color: "#005F73",
+        values: rows.map(r => r.mae)
+      }, {
+        label: "RMSE",
+        color: "#B85C38",
+        values: rows.map(r => r.rmse)
+      }];
+      drawGroupedBarChart("retrieval-chart", rows.map(r => r.mode.replace("@k10_b07", "")), series, "误差 (μm)", { innerPad: 8 });
+
+      const best = [...rows].sort((a, b) => a.mae - b.mae)[0];
+      const formal = rows.find(r => r.mode === "delta-blend@k10_b07");
+      document.getElementById("retrieval-caption").textContent =
+        `${fold} 中 formal mainline 使用 delta-blend@k10_b07。按 MAE 看最小值为 ${best.mode} = ${fmt(best.mae)} μm；但主文叙事仍以残差融合方案为正式模式。`;
+
+      const insights = [
+        {
+          title: "正式模式为何选 delta-blend",
+          body: "delta-blend 保留 backbone 的全局趋势，再用检索修正未来增量残差，更符合本文的方法层级与 reviewer-facing 叙事。"
+        },
+        {
+          title: "knn-only 不是主线",
+          body: "直接用邻居绝对值替代预测在 fold1 上明显失稳，说明纯检索不能作为正式主文方案。"
+        },
+        {
+          title: "固定参数来源",
+          body: `当前 formal 配置为 k=10, beta=0.7, late_q=0.0，来自 inner LOSO train-only selection，而非 outer test 调参。`
+        }
+      ];
+      document.getElementById("retrieval-insights").innerHTML = insights.map(i =>
+        `<div class="insight"><strong>${i.title}</strong><span>${i.body}</span></div>`
+      ).join("");
+    }
+
+    function renderTmaSection() {
+      const folds = ["fold1", "fold2", "fold3"];
+      const series = ["No TMA", "+ TMA only", "+ TMA + KNN-DRR"].map(setting => ({
+        label: setting,
+        color: palette[setting],
+        values: folds.map(fold => tmaAblation.find(r => r.fold === fold && r.setting === setting).late)
+      }));
+      drawGroupedBarChart("tma-chart", folds, series, "late-stage MAE (μm)");
+
+      const captionParts = retrievalQuality.map(r => {
+        const diff = r.baselineDeltaLate - r.tmaDeltaLate;
+        return `${r.fold} 的 late-stage delta error 从 ${fmt(r.baselineDeltaLate)} 降到 ${fmt(r.tmaDeltaLate)}（下降 ${fmt(diff)}）`;
+      });
+      document.getElementById("tma-caption").textContent =
+        `TMA 的核心作用是提高 retrieval usefulness。${captionParts.join("；")}。`;
+
+      const insights = [
+        {
+          title: "TMA 是辅助层，不是最终预测源",
+          body: "TMA 单独能降低基础误差，但真正把平均 MAE 压到 3.1784 μm 的仍是后续 KNN-DRR。"
+        },
+        {
+          title: "改善的是可比性与检索可用性",
+          body: "late-stage delta error 在三折上均下降，说明 TMA 有助于让跨工况样本在表示空间中更可比较。"
+        },
+        {
+          title: "距离指标不必全部单调变优",
+          body: "TMA 的价值不在于让所有 top-1 / top-5 距离都变小，而在于让检索对残差修正更有用。"
+        }
+      ];
+      document.getElementById("tma-insights").innerHTML = insights.map(i =>
+        `<div class="insight"><strong>${i.title}</strong><span>${i.body}</span></div>`
+      ).join("");
+    }
+
+    function renderGallery() {
+      const host = document.getElementById("figure-gallery");
+      host.innerHTML = figures.map(fig => `
+        <article class="thumb" data-fig="${fig.id}">
+          <img src="${fig.img}" alt="${fig.title}">
+          <h4>${fig.id} · ${fig.title}</h4>
+          <p>${fig.caption}</p>
+        </article>
+      `).join("");
+
+      host.querySelectorAll(".thumb").forEach(node => {
+        node.addEventListener("click", () => {
+          const fig = figures.find(f => f.id === node.dataset.fig);
+          document.getElementById("modal-title").textContent = `${fig.id} · ${fig.title}`;
+          document.getElementById("modal-caption").textContent = fig.caption;
+          document.getElementById("modal-image").src = fig.img;
+          document.getElementById("modal-image").alt = fig.title;
+          document.getElementById("modal-pdf").href = fig.pdf;
+          document.getElementById("image-modal").classList.add("open");
+        });
+      });
+    }
+
+    function renderTableLinks() {
+      document.getElementById("table-links").innerHTML = tables.map(table => `
+        <a class="table-link" href="${table.file}" target="_blank" rel="noopener">
+          <h4>${table.id} · ${table.title}</h4>
+          <p>${table.note}</p>
+        </a>
+      `).join("");
+    }
+
+    function initHero() {
+      const baseline = mainResults.find(r => r.method === "TimerXL head-only" && r.fold === "avg").mae_full_raw;
+      const final = mainResults.find(r => r.method === "TimerXL + TMA + KNN-DRR" && r.fold === "avg").mae_full_raw;
+      const finalRmse = mainResults.find(r => r.method === "TimerXL + TMA + KNN-DRR" && r.fold === "avg").rmse_full_raw;
+      document.getElementById("hero-avg-mae").textContent = fmt(final);
+      document.getElementById("hero-avg-rmse").textContent = fmt(finalRmse);
+      document.getElementById("hero-improve").textContent = `${fmt(((baseline - final) / baseline) * 100, 1)}%`;
+    }
+
+    document.querySelectorAll(".metric-toggle").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".metric-toggle").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentMetric = btn.dataset.metric;
+        renderMainSection();
+      });
+    });
+
+    document.querySelectorAll(".stage-toggle").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".stage-toggle").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentStageKind = btn.dataset.kind;
+        renderStageSection();
+      });
+    });
+
+    document.getElementById("retrieval-fold-select").addEventListener("change", renderRetrievalSection);
+    document.getElementById("modal-close").addEventListener("click", () => document.getElementById("image-modal").classList.remove("open"));
+    document.getElementById("image-modal").addEventListener("click", (e) => {
+      if (e.target.id === "image-modal") {
+        e.currentTarget.classList.remove("open");
+      }
+    });
+
+    initHero();
+    renderMainSection();
+    renderStageSection();
+    renderRetrievalSection();
+    renderTmaSection();
+    renderGallery();
+    renderTableLinks();
+  </script>
+</body>
+</html>

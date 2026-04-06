@@ -1,0 +1,13 @@
+method,fold,mae_full_raw,rmse_full_raw,mse_full_raw,protocol_status,notes
+TimerXL head-only,fold1,13.398430824279785,20.436194888565666,417.6380615234375,formal-ready,Clean protocol: train-time test evaluation disabled via formal wrapper.
+TimerXL + TMA,fold1,9.276140213012695,17.59681731837687,309.6479797363281,formal-ready,Clean protocol: train-time test evaluation disabled; TMA only affects train-time augmentation.
+TimerXL + TMA + KNN-DRR,fold1,3.2064666748046875,4.158579008888607,17.293779373168945,formal-ready,"Inner-LOSO train-only validation selected k=10, beta=0.7, late_q=0.0; outer test evaluated once."
+TimerXL head-only,fold2,6.974664688110352,8.613006656620682,74.18388366699219,formal-ready,Clean protocol: train-time test evaluation disabled via formal wrapper.
+TimerXL + TMA,fold2,3.7426395416259766,4.521605441818688,20.444915771484375,formal-ready,Clean protocol: train-time test evaluation disabled; TMA only affects train-time augmentation.
+TimerXL + TMA + KNN-DRR,fold2,3.3330025672912598,4.0985247307124695,16.79790496826172,formal-ready,"Inner-LOSO train-only validation selected k=10, beta=0.7, late_q=0.0; outer test evaluated once."
+TimerXL head-only,fold3,5.940085411071777,6.874859895145563,47.26369857788086,formal-ready,Clean protocol: train-time test evaluation disabled via formal wrapper.
+TimerXL + TMA,fold3,5.426422595977783,6.270470626666136,39.31880187988281,formal-ready,Clean protocol: train-time test evaluation disabled; TMA only affects train-time augmentation.
+TimerXL + TMA + KNN-DRR,fold3,2.995772123336792,3.671849806678865,13.482481002807617,formal-ready,"Inner-LOSO train-only validation selected k=10, beta=0.7, late_q=0.0; outer test evaluated once."
+TimerXL head-only,avg,8.771060307820639,11.974687146777304,179.69521458943686,formal-ready,Clean protocol: train-time test evaluation disabled via formal wrapper.
+TimerXL + TMA,avg,6.148400783538818,9.462964462287232,123.13723246256511,formal-ready,Clean protocol: train-time test evaluation disabled; TMA only affects train-time augmentation.
+TimerXL + TMA + KNN-DRR,avg,3.1784137884775796,3.976317848759981,15.858055114746094,formal-ready,"Inner-LOSO train-only validation selected k=10, beta=0.7, late_q=0.0; outer test evaluated once."

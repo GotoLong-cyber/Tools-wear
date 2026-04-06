@@ -16,6 +16,9 @@ from pathlib import Path
 import numpy as np
 
 
+# BASE_KEEP_IDX provenance:
+# derived from Stage-B train-only predictive selection lineage.
+# See feature_extraction/feature_selection_manifest.json for full provenance.
 BASE_KEEP_IDX = np.asarray([2, 6, 10, 14, 18, 22, 26, 3], dtype=np.int64)
 BASE_KEEP_NAMES = [
     "Feat_3",

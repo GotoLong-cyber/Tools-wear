@@ -1,0 +1,9 @@
+{
+  "k": 3,
+  "beta": 0.3,
+  "late_library_quantile": 0.0,
+  "selection_metric": "mae_full_raw",
+  "selection_protocol": "train-only validation across source-domain folds",
+  "selection_source": "paper_exec/train_only_param_selection/results/train_only_knn_global_summary.csv",
+  "note": "Selected without using outer test folds."
+}

@@ -183,6 +183,12 @@ if __name__ == '__main__':
     parser.add_argument('--weight_decay', type=float, default=0)
     parser.add_argument('--valid_last', action='store_true', help='valid last', default=False)
     parser.add_argument('--last_token', action='store_true', help='last token', default=False)
+    parser.add_argument(
+        '--disable_train_test_eval',
+        action='store_true',
+        default=False,
+        help='formal protocol: disable epoch-wise test evaluation during training; test is run only after checkpoint selection is frozen'
+    )
     
     # GPU
     parser.add_argument('--gpu', type=int, default=0, help='gpu')

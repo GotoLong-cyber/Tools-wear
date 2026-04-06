@@ -1,0 +1,10 @@
+run_group,variant,fold,train_runs,test_runs,gpu_id,results_subdir,runtime_protocol,retrieval_hparams,library_scope,status,notes
+formal_clean_v1,baseline,fold1,"c1,c4",c6,0,20260401_BaselineClean_seqgpu0,disable_train_test_eval,NA,NA,complete,clean training and final test metric available; old wrapper status file falsely reported FAIL after completion
+formal_clean_v1,baseline,fold2,"c4,c6",c1,3,20260401_BaselineClean_resume_gpu3,disable_train_test_eval,NA,NA,in_progress,resume run launched on gpu3 after wrapper fix
+formal_clean_v1,baseline,fold3,"c1,c6",c4,0,20260401_BaselineClean_seqgpu0,disable_train_test_eval,NA,NA,missing,not started because fold1 has not finished
+formal_clean_v1,tma,fold1,"c1,c4",c6,2,20260401_TMAClean_seqgpu2,disable_train_test_eval,NA,NA,complete,clean training and final test metric available
+formal_clean_v1,tma,fold2,"c4,c6",c1,2,20260401_TMAClean_seqgpu2,disable_train_test_eval,NA,NA,complete,clean training and final test metric available; wrapper status file is stale due shell parse error after completion
+formal_clean_v1,tma,fold3,"c1,c6",c4,2,20260401_TMAClean_seqgpu2,disable_train_test_eval,NA,NA,in_progress,resume run launched after wrapper fix
+formal_clean_v1,retrieval_backbone,fold1,"c1,c4",c6,3,20260401_RetrievalBackboneClean_seqgpu3,disable_train_test_eval,"k=5,beta=0.5,late_q=0.80",train_only,complete,clean training and final test metric available
+formal_clean_v1,retrieval_backbone,fold2,"c4,c6",c1,3,20260401_RetrievalBackboneClean_seqgpu3,disable_train_test_eval,"k=5,beta=0.5,late_q=0.80",train_only,complete,clean training and final test metric available
+formal_clean_v1,retrieval_backbone,fold3,"c1,c6",c4,3,20260401_RetrievalBackboneClean_seqgpu3,disable_train_test_eval,"k=5,beta=0.5,late_q=0.80",train_only,complete,clean training and final test metric available

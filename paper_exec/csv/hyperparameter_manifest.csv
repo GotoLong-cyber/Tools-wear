@@ -1,0 +1,16 @@
+component,hyperparameter,value,description
+TimerXL,seq_len,96,history length
+TimerXL,pred_len,16,forecast horizon
+TimerXL,d_model,1024,hidden width
+TimerXL,d_ff,2048,feed-forward width
+TimerXL,n_heads,8,attention heads
+Training,learning_rate,0.0001,AdamW learning rate
+Training,batch_size,96,training batch size
+Training,epochs,1000,max training epochs
+TMA,train_stride_candidates,"1,2",train-time stride candidates
+TMA,train_stride_policy,random,blind stride matching policy
+KNN-DRR,selection_protocol,inner_LOSO_train_only,leave-one-source-out validation inside each outer fold
+KNN-DRR,k,10,fixed number of neighbors
+KNN-DRR,beta,0.7,delta residual blend weight
+KNN-DRR,late_library_quantile,0.0,train-only late library threshold
+KNN-DRR,distance,cosine,retrieval similarity metric

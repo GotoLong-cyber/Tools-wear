@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 """
+DEPRECATED: exploratory script only.
+Uses full-run wear_mono[-1] for progress normalization (non-causal within-run future leakage).
+Do NOT use for paper results. Official A2 is implemented in data_loader.py as train-time augmentation.
+
 A2 (fold1) data builder: fixed-step baseline vs wear-stage aligned slicing.
 
 This script builds a stage-aligned variant for train runs (c1/c4 by default),
@@ -189,4 +193,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

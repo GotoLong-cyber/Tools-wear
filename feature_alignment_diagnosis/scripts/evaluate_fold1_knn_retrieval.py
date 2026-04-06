@@ -45,7 +45,13 @@ def load_fixed_knn_config(config_path: Path) -> tuple[int, float, float, dict]:
     return k, beta, late_q, cfg
 
 
-def build_args(project_root: Path, runtime_root: Path, checkpoint_path: Path, results_subdir: str) -> SimpleNamespace:
+def build_args(
+    project_root: Path,
+    runtime_root: Path,
+    checkpoint_path: Path,
+    results_subdir: str,
+    wear_agg: str = "max",
+) -> SimpleNamespace:
     return SimpleNamespace(
         task_name="forecast",
         is_training=0,
@@ -99,7 +105,7 @@ def build_args(project_root: Path, runtime_root: Path, checkpoint_path: Path, re
         test_runs="c6",
         split_ratio=0.8,
         time_gap=0,
-        wear_agg="max",
+        wear_agg=str(wear_agg),
         mask_future_features_in_y=False,
         enable_dual_loader=1,
         train_stride_candidates="1,2",
