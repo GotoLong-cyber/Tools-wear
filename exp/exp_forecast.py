@@ -539,7 +539,10 @@ class Exp_Forecast(Exp_Basic):
         train_bundle = self._build_train_bundle()
         train_data = train_bundle["train_data"]
         train_loader = train_bundle["train_loader"]
-        vali_data, vali_loader = self._get_data(flag='val')
+        use_validation = not bool(getattr(self.args, "no_val_fixed_epochs", False))
+        vali_data, vali_loader = (None, None)
+        if use_validation:
+            vali_data, vali_loader = self._get_data(flag='val')
         use_epoch_test_eval = not bool(getattr(self.args, "disable_train_test_eval", False))
         test_data, test_loader = (None, None)
         if use_epoch_test_eval:
@@ -553,7 +556,7 @@ class Exp_Forecast(Exp_Basic):
         time_now = time.time()
 
         train_steps = int(train_bundle["train_steps"])
-        early_stopping = EarlyStopping(self.args, verbose=True)
+        early_stopping = EarlyStopping(self.args, verbose=True) if use_validation else None
 
         model_optim = self._select_optimizer()
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(model_optim, T_max=self.args.tmax, eta_min=1e-8)
@@ -685,21 +688,30 @@ class Exp_Forecast(Exp_Basic):
                 if train_bundle["mode"] == "dual":
                     print(f"[DualLoader][Epoch {epoch + 1}] batch_count_by_run={source_batch_counter}")
 
-            vali_loss = self.vali(vali_data, vali_loader, criterion, is_test=self.args.valid_last)
-            if use_epoch_test_eval:
-                test_loss = self.vali(test_data, test_loader, criterion, is_test=True)
-                if (self.args.ddp and self.args.local_rank == 0) or not self.args.ddp:
-                    print("Epoch: {}, Steps: {} | Vali Loss: {:.7f} Test Loss: {:.7f}".format(
-                        epoch + 1, train_steps, vali_loss, test_loss))
+            if use_validation:
+                vali_loss = self.vali(vali_data, vali_loader, criterion, is_test=self.args.valid_last)
+                if use_epoch_test_eval:
+                    test_loss = self.vali(test_data, test_loader, criterion, is_test=True)
+                    if (self.args.ddp and self.args.local_rank == 0) or not self.args.ddp:
+                        print("Epoch: {}, Steps: {} | Vali Loss: {:.7f} Test Loss: {:.7f}".format(
+                            epoch + 1, train_steps, vali_loss, test_loss))
+                else:
+                    if (self.args.ddp and self.args.local_rank == 0) or not self.args.ddp:
+                        print("Epoch: {}, Steps: {} | Vali Loss: {:.7f} | Test Loss: DISABLED_BY_PROTOCOL".format(
+                            epoch + 1, train_steps, vali_loss))
+                early_stopping(vali_loss, self.model, path)
+                if early_stopping.early_stop:
+                    if (self.args.ddp and self.args.local_rank == 0) or not self.args.ddp:
+                        print("Early stopping")
+                    break
             else:
                 if (self.args.ddp and self.args.local_rank == 0) or not self.args.ddp:
-                    print("Epoch: {}, Steps: {} | Vali Loss: {:.7f} | Test Loss: DISABLED_BY_PROTOCOL".format(
-                        epoch + 1, train_steps, vali_loss))
-            early_stopping(vali_loss, self.model, path)
-            if early_stopping.early_stop:
-                if (self.args.ddp and self.args.local_rank == 0) or not self.args.ddp:
-                    print("Early stopping")
-                break
+                    if use_epoch_test_eval:
+                        print("Epoch: {}, Steps: {} | Vali Loss: DISABLED_BY_PROTOCOL | Test Loss: DISABLED_BY_PROTOCOL".format(
+                            epoch + 1, train_steps))
+                    else:
+                        print("Epoch: {}, Steps: {} | Vali Loss: DISABLED_BY_PROTOCOL | Test Loss: DISABLED_BY_PROTOCOL".format(
+                            epoch + 1, train_steps))
             if self.args.cosine:
                 scheduler.step()
                 if (self.args.ddp and self.args.local_rank == 0) or not self.args.ddp:
@@ -708,6 +720,13 @@ class Exp_Forecast(Exp_Basic):
                 adjust_learning_rate(model_optim, epoch + 1, self.args)
                 
         best_model_path = path + '/' + 'checkpoint.pth'
+        if not use_validation:
+            saver = EarlyStopping(self.args, verbose=False)
+            if (self.args.ddp and self.args.local_rank == 0) or not self.args.ddp:
+                saver.save_checkpoint(float("nan"), self.model, path)
+                print("[Protocol] no_val_fixed_epochs=1 -> saved last-epoch checkpoint")
+            if self.args.ddp:
+                dist.barrier()
         if self.args.ddp:
             dist.barrier()
             self.model.load_state_dict(torch.load(best_model_path), strict=False)

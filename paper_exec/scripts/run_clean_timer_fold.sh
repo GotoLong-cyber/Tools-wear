@@ -19,6 +19,10 @@ PATIENCE="${PATIENCE:-100}"
 SEED="${SEED:-2026}"
 DISABLE_TRAIN_TEST_EVAL="${DISABLE_TRAIN_TEST_EVAL:-1}"
 WEAR_AGG="${WEAR_AGG:-max}"
+SPLIT_RATIO="${SPLIT_RATIO:-0.8}"
+TIME_GAP="${TIME_GAP:-0}"
+NO_VAL_FIXED_EPOCHS="${NO_VAL_FIXED_EPOCHS:-0}"
+MODEL_ID_EXTRA_SUFFIX="${MODEL_ID_EXTRA_SUFFIX:-}"
 export CUDA_VISIBLE_DEVICES="${GPU_ID}"
 
 "${PYTHON_BIN}" - <<'PY'
@@ -93,6 +97,12 @@ for run in c1 c4 c6; do
 done
 
 MODEL_ID="PHM_${TRAIN_RUNS//,/}_to_${TEST_RUNS}_${MODEL_SUFFIX}_${WEAR_AGG}agg_dual_seed${SEED}_e${TRAIN_EPOCHS}_bt96_gpu${GPU_ID}"
+if [[ "${NO_VAL_FIXED_EPOCHS}" == "1" ]]; then
+  MODEL_ID="${MODEL_ID}_novalfix"
+fi
+if [[ -n "${MODEL_ID_EXTRA_SUFFIX}" ]]; then
+  MODEL_ID="${MODEL_ID}_${MODEL_ID_EXTRA_SUFFIX}"
+fi
 RUN_LOG="${ROUND_DIR}/longrun_${MODEL_ID}.log"
 
 CMD=(
@@ -134,8 +144,8 @@ CMD=(
   --n_vars "${N_VARS}"
   --train_runs "${TRAIN_RUNS}"
   --test_runs "${TEST_RUNS}"
-  --split_ratio 0.8
-  --time_gap 0
+  --split_ratio "${SPLIT_RATIO}"
+  --time_gap "${TIME_GAP}"
   --wear_agg "${WEAR_AGG}"
   --enable_dual_loader 1
   --num_workers 0
@@ -146,10 +156,13 @@ CMD=(
 if [[ "${DISABLE_TRAIN_TEST_EVAL}" == "1" ]]; then
   CMD+=(--disable_train_test_eval)
 fi
+if [[ "${NO_VAL_FIXED_EPOCHS}" == "1" ]]; then
+  CMD+=(--no_val_fixed_epochs)
+fi
 CMD+=("${EXTRA_ARGS[@]}")
 
 echo "[RUN] ${MODEL_ID}"
-echo "[RUN] variant=${VARIANT} fold=${FOLD} gpu=${GPU_ID} wear_agg=${WEAR_AGG}"
+echo "[RUN] variant=${VARIANT} fold=${FOLD} gpu=${GPU_ID} wear_agg=${WEAR_AGG} split_ratio=${SPLIT_RATIO} time_gap=${TIME_GAP} no_val_fixed_epochs=${NO_VAL_FIXED_EPOCHS}"
 echo "[RUN] log=${RUN_LOG}"
 CMD_FILE="${ROUND_DIR}/cmd_${MODEL_ID}.txt"
 : > "${CMD_FILE}"

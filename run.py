@@ -182,6 +182,8 @@ if __name__ == '__main__':
     parser.add_argument('--tmax', type=int, default=10, help='tmax in cosine anealing lr')
     parser.add_argument('--weight_decay', type=float, default=0)
     parser.add_argument('--valid_last', action='store_true', help='valid last', default=False)
+    parser.add_argument('--no_val_fixed_epochs', action='store_true', default=False,
+                        help='disable validation/early stopping and save the last-epoch checkpoint')
     parser.add_argument('--last_token', action='store_true', help='last token', default=False)
     parser.add_argument(
         '--disable_train_test_eval',
