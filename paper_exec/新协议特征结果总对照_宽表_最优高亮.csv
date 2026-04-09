@@ -1,0 +1,29 @@
+﻿Method (模型方法),特征,损失函数,C1,C1,C4,C4,C6,C6,Note (备注)
+,,,MAE,RMSE,MAE,RMSE,MAE,RMSE,
+TimerXL (Head-only),"RMS-7 (7D, epoch=200)",MSE(wear) + λ_m L_mono + λ_s L_smooth,4.1546,4.8488,3.7970,5.1337,5.2127,5.5836,7通道RMS
+TimerXL + TMA,"RMS-7 (7D, epoch=200)",MSE(wear) + λ_m L_mono + λ_s L_smooth,4.1570,4.9371,3.5394,4.1966,5.7977,6.4292,7通道RMS
+"TimerXL + KNN (knn-only, late_q=0.0)","RMS-7 (7D, epoch=200)",MSE(wear) + λ_m L_mono + λ_s L_smooth,**2.5361**,**2.8732**,**2.5289**,**3.0947**,2.3257,2.6935,7通道RMS
+"TimerXL + KNN (blend, late_q=0.0)","RMS-7 (7D, epoch=200)",MSE(wear) + λ_m L_mono + λ_s L_smooth,2.8194,3.3881,3.1050,3.9773,3.0682,3.3493,7通道RMS
+TimerXL + TMA + KNN (knn-only),"RMS-7 (7D, epoch=200)",MSE(wear) + λ_m L_mono + λ_s L_smooth,4.6059,4.7076,3.2820,3.5913,2.6900,3.0424,7通道RMS
+TimerXL + TMA + KNN (blend),"RMS-7 (7D, epoch=200)",MSE(wear) + λ_m L_mono + λ_s L_smooth,3.1766,3.8091,3.1157,3.6591,4.0788,4.4303,7通道RMS
+TimerXL (Head-only),RMS-7 + PTP-7 (14D),MSE(wear) + λ_m L_mono + λ_s L_smooth,5.0482,5.8455,3.6138,4.4019,5.3528,7.8411,7通道RMS + 7通道PTP
+TimerXL (Head-only),RMS-7 + WaveletEnergy-7 (14D),MSE(wear) + λ_m L_mono + λ_s L_smooth,4.6214,4.7808,6.0646,7.5543,6.2435,10.0659,7通道RMS + 7通道小波能量
+TimerXL (Head-only),RMS-7 + PTP-7 + WaveletEnergy-7 (21D),MSE(wear) + λ_m L_mono + λ_s L_smooth,,,,,8.5399,12.4688,7通道RMS + 7通道PTP + 7通道小波能量
+TimerXL + TMA,RMS-7 + PTP-7 + WaveletEnergy-7 (21D),MSE(wear) + λ_m L_mono + λ_s L_smooth,4.7034,5.0962,3.9782,5.0260,7.1976,10.6094,7通道RMS + 7通道PTP + 7通道小波能量
+TimerXL + TMA + KNN (knn-only),RMS-7 + PTP-7 + WaveletEnergy-7 (21D),MSE(wear) + λ_m L_mono + λ_s L_smooth,4.6073,4.7091,3.5049,3.8085,2.6119,2.9379,7通道RMS + 7通道PTP + 7通道小波能量
+TimerXL + TMA + KNN (blend),RMS-7 + PTP-7 + WaveletEnergy-7 (21D),MSE(wear) + λ_m L_mono + λ_s L_smooth,4.6554,4.7188,3.5755,4.0782,3.7868,4.9437,7通道RMS + 7通道PTP + 7通道小波能量
+TimerXL (Head-only),Full-133 (133D),MSE(wear) + λ_m L_mono + λ_s L_smooth,4.1883,5.3699,3.9337,5.3054,29.9033,43.8633,7通道×19统计特征（时域+频域）
+TimerXL + TMA,Full-133 (133D),MSE(wear) + λ_m L_mono + λ_s L_smooth,3.9030,4.6115,3.9751,4.7317,28.9756,43.0307,7通道×19统计特征（时域+频域）
+TimerXL + KNN (knn-only),Full-133 (133D),MSE(wear) + λ_m L_mono + λ_s L_smooth,4.4112,4.5147,3.4423,3.7842,2.4228,**2.5892**,7通道×19统计特征（时域+频域）
+TimerXL + KNN (blend),Full-133 (133D),MSE(wear) + λ_m L_mono + λ_s L_smooth,3.7864,4.2468,3.2528,4.0364,16.1288,22.9602,7通道×19统计特征（时域+频域）
+TimerXL + TMA + KNN (knn-only),Full-133 (133D),MSE(wear) + λ_m L_mono + λ_s L_smooth,4.4129,4.5164,3.4032,3.7176,2.4228,**2.5892**,7通道×19统计特征（时域+频域）
+TimerXL + TMA + KNN (blend),Full-133 (133D),MSE(wear) + λ_m L_mono + λ_s L_smooth,3.4752,3.8673,2.8981,3.5218,15.6186,22.5322,7通道×19统计特征（时域+频域）
+TimerXL (Head-only),"RMS-7 (7D, epoch=300)",MSE(wear) + λ_m L_mono + λ_s L_smooth,5.1470,6.2884,4.3575,5.7984,4.4243,5.0665,7通道RMS
+TimerXL + TMA,"RMS-7 (7D, epoch=300)",MSE(wear) + λ_m L_mono + λ_s L_smooth,4.9189,5.6726,4.2480,5.2238,5.5669,5.9324,7通道RMS
+TimerXL + TMA (Retrieval Backbone),RMS-7 (7D),MSE(wear) + λ_m L_mono + λ_s L_smooth,4.9189,5.6726,4.2480,5.2238,5.5669,5.9324,7通道RMS
+"TimerXL + KNN (knn-only, late_q=0.0)","RMS-7 (7D, epoch=300)",MSE(wear) + λ_m L_mono + λ_s L_smooth,2.6133,2.9668,2.5691,3.1348,**2.2289**,2.6342,7通道RMS
+"TimerXL + KNN (blend, late_q=0.0)","RMS-7 (7D, epoch=300)",MSE(wear) + λ_m L_mono + λ_s L_smooth,3.3863,4.1745,3.3879,4.3192,2.6248,3.0576,7通道RMS
+TimerXL + TMA + KNN (knn-only),"RMS-7 (7D, epoch=300)",MSE(wear) + λ_m L_mono + λ_s L_smooth,4.4399,4.5432,3.3565,3.6844,2.4668,2.7946,7通道RMS
+"TimerXL + TMA + KNN (knn-only, late_q=0.0)",RMS-7 (7D),MSE(wear) + λ_m L_mono + λ_s L_smooth,2.7296,3.0900,2.6175,3.2093,2.3226,2.6889,7通道RMS
+TimerXL + TMA + KNN (blend),"RMS-7 (7D, epoch=300)",MSE(wear) + λ_m L_mono + λ_s L_smooth,3.0113,3.8798,3.4610,4.1607,3.8396,4.0684,7通道RMS
+"TimerXL + TMA + KNN (blend, late_q=0.0)",RMS-7 (7D),MSE(wear) + λ_m L_mono + λ_s L_smooth,3.2150,3.8439,3.3501,4.1302,3.7592,3.9863,7通道RMS

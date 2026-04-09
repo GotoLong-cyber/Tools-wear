@@ -1,0 +1,7 @@
+inner_id,outer_fold,library_run,query_run,selected_k,selected_beta,selected_late_q,selected_mode,selected_metric
+fold1:c1->c4,fold1,c1,c4,3,0.0,0.8,delta-blend@k3_b00,1.1317228078842163
+fold1:c4->c1,fold1,c4,c1,3,0.0,0.8,delta-blend@k3_b00,1.6853793859481812
+fold2:c4->c6,fold2,c4,c6,3,1.0,0.8,delta-blend@k3_b10,5.797050476074219
+fold2:c6->c4,fold2,c6,c4,3,0.5,0.8,delta-blend@k3_b05,2.129615306854248
+fold3:c1->c6,fold3,c1,c6,3,1.0,0.8,delta-blend@k3_b10,1.9378862380981445
+fold3:c6->c1,fold3,c6,c1,3,0.5,0.8,delta-blend@k3_b05,1.1142793893814087

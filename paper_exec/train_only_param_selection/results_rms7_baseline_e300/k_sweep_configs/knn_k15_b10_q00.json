@@ -1,0 +1,8 @@
+{
+  "k": 15,
+  "beta": 1.0,
+  "late_library_quantile": 0.0,
+  "selection_metric": "manual outer-test sensitivity only",
+  "selection_protocol": "fixed beta=1.0 and late_q=0.0 for k-sensitivity plotting",
+  "note": "Outer-test k sweep for Pure RMS7 baseline checkpoint."
+}

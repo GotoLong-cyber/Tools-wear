@@ -2,15 +2,15 @@
 set -euo pipefail
 
 # Generic clean-protocol training entrypoint for PHM2010 fold runs.
-# This wrapper disables epoch-wise test evaluation during training and keeps
-# train/val-only model selection. Test is executed only after training freezes.
+# This wrapper supports the current paper protocol and can switch among
+# compact selected features and the legacy full133 baseline.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 cd "${PROJECT_ROOT}"
 
 PYTHON_BIN="${PYTHON_BIN:-/home/jyc23/miniconda3/envs/TimerXL/bin/python}"
-VARIANT="${VARIANT:?VARIANT must be one of baseline,tma,retrieval}"
+VARIANT="${VARIANT:?VARIANT must be one of baseline,tma,retrieval,rms7,rms7_tma,rms7_retrieval,rms7ptp,rms7wav,rms7ptpwav,rms7ptpwav_tma,rms7ptpwav_retrieval,f133,f133_tma}"
 FOLD="${FOLD:?FOLD must be one of fold1,fold2,fold3}"
 GPU_ID="${GPU_ID:?GPU_ID is required}"
 RESULTS_SUBDIR="${RESULTS_SUBDIR:?RESULTS_SUBDIR is required}"
@@ -39,6 +39,142 @@ case "${FOLD}" in
 esac
 
 case "${VARIANT}" in
+  rms7)
+    N_VARS=7
+    MODEL_SUFFIX="rms7_BaselineClean"
+    SELECTED_DIR="${PROJECT_ROOT}/dataset/passlevel_tree_select/selected_rms7"
+    FILE_SUFFIX="rms7"
+    RUNTIME_DIR="${PROJECT_ROOT}/dataset/passlevel_tree_select/runtime_rms7_baseline_clean_${FOLD}_gpu${GPU_ID}"
+    if [[ "${SKIP_FEATURE_BUILD:-0}" != "1" ]]; then
+      "${PYTHON_BIN}" "${PROJECT_ROOT}/feature_extraction/build_rms7_only.py" \
+        --project_root "${PROJECT_ROOT}" \
+        --runs c1 c4 c6 \
+        --out_dir "dataset/passlevel_tree_select/selected_rms7"
+    fi
+    EXTRA_ARGS=()
+    ;;
+  rms7_tma)
+    N_VARS=7
+    MODEL_SUFFIX="rms7_TMAClean"
+    SELECTED_DIR="${PROJECT_ROOT}/dataset/passlevel_tree_select/selected_rms7"
+    FILE_SUFFIX="rms7"
+    RUNTIME_DIR="${PROJECT_ROOT}/dataset/passlevel_tree_select/runtime_rms7_tma_clean_${FOLD}_gpu${GPU_ID}"
+    if [[ "${SKIP_FEATURE_BUILD:-0}" != "1" ]]; then
+      "${PYTHON_BIN}" "${PROJECT_ROOT}/feature_extraction/build_rms7_only.py" \
+        --project_root "${PROJECT_ROOT}" \
+        --runs c1 c4 c6 \
+        --out_dir "dataset/passlevel_tree_select/selected_rms7"
+    fi
+    EXTRA_ARGS=(
+      --train_stride_candidates "1,2"
+      --train_stride_quantiles "0.5"
+      --train_stride_use_monotonic_wear 1
+      --train_stride_policy random
+      --train_stride_random_seed 2026
+    )
+    ;;
+  rms7_retrieval)
+    N_VARS=7
+    MODEL_SUFFIX="rms7_TMAClean"
+    SELECTED_DIR="${PROJECT_ROOT}/dataset/passlevel_tree_select/selected_rms7"
+    FILE_SUFFIX="rms7"
+    RUNTIME_DIR="${PROJECT_ROOT}/dataset/passlevel_tree_select/runtime_rms7_retrieval_clean_${FOLD}_gpu${GPU_ID}"
+    if [[ "${SKIP_FEATURE_BUILD:-0}" != "1" ]]; then
+      "${PYTHON_BIN}" "${PROJECT_ROOT}/feature_extraction/build_rms7_only.py" \
+        --project_root "${PROJECT_ROOT}" \
+        --runs c1 c4 c6 \
+        --out_dir "dataset/passlevel_tree_select/selected_rms7"
+    fi
+    EXTRA_ARGS=(
+      --train_stride_candidates "1,2"
+      --train_stride_quantiles "0.5"
+      --train_stride_use_monotonic_wear 1
+      --train_stride_policy random
+      --train_stride_random_seed 2026
+    )
+    ;;
+  rms7ptp)
+    N_VARS=14
+    MODEL_SUFFIX="rms7ptp_BaselineClean"
+    SELECTED_DIR="${PROJECT_ROOT}/dataset/passlevel_tree_select/selected_rms7_ptp7"
+    FILE_SUFFIX="rms7_ptp7"
+    RUNTIME_DIR="${PROJECT_ROOT}/dataset/passlevel_tree_select/runtime_rms7_ptp7_baseline_clean_${FOLD}_gpu${GPU_ID}"
+    if [[ "${SKIP_FEATURE_BUILD:-0}" != "1" ]]; then
+      "${PYTHON_BIN}" "${PROJECT_ROOT}/feature_extraction/build_rms7_ptp7.py" \
+        --project_root "${PROJECT_ROOT}" \
+        --runs c1 c4 c6 \
+        --out_dir "dataset/passlevel_tree_select/selected_rms7_ptp7"
+    fi
+    EXTRA_ARGS=()
+    ;;
+  rms7wav)
+    N_VARS=14
+    MODEL_SUFFIX="rms7wav_BaselineClean"
+    SELECTED_DIR="${PROJECT_ROOT}/dataset/passlevel_tree_select/selected_rms7_wav7"
+    FILE_SUFFIX="rms7_wav7"
+    RUNTIME_DIR="${PROJECT_ROOT}/dataset/passlevel_tree_select/runtime_rms7_wav7_baseline_clean_${FOLD}_gpu${GPU_ID}"
+    if [[ "${SKIP_FEATURE_BUILD:-0}" != "1" ]]; then
+      "${PYTHON_BIN}" "${PROJECT_ROOT}/feature_extraction/build_rms7_wav7.py" \
+        --project_root "${PROJECT_ROOT}" \
+        --runs c1 c4 c6 \
+        --out_dir "dataset/passlevel_tree_select/selected_rms7_wav7"
+    fi
+    EXTRA_ARGS=()
+    ;;
+  rms7ptpwav)
+    N_VARS=21
+    MODEL_SUFFIX="rms7ptpwav_BaselineClean"
+    SELECTED_DIR="${PROJECT_ROOT}/dataset/passlevel_tree_select/selected_rms7_ptp7_wav7"
+    FILE_SUFFIX="rms7_ptp7_wav7"
+    RUNTIME_DIR="${PROJECT_ROOT}/dataset/passlevel_tree_select/runtime_rms7_ptp7_wav7_baseline_clean_${FOLD}_gpu${GPU_ID}"
+    if [[ "${SKIP_FEATURE_BUILD:-0}" != "1" ]]; then
+      "${PYTHON_BIN}" "${PROJECT_ROOT}/feature_extraction/build_rms7_ptp7_wav7.py" \
+        --project_root "${PROJECT_ROOT}" \
+        --runs c1 c4 c6 \
+        --out_dir "dataset/passlevel_tree_select/selected_rms7_ptp7_wav7"
+    fi
+    EXTRA_ARGS=()
+    ;;
+  rms7ptpwav_tma)
+    N_VARS=21
+    MODEL_SUFFIX="rms7ptpwav_TMAClean"
+    SELECTED_DIR="${PROJECT_ROOT}/dataset/passlevel_tree_select/selected_rms7_ptp7_wav7"
+    FILE_SUFFIX="rms7_ptp7_wav7"
+    RUNTIME_DIR="${PROJECT_ROOT}/dataset/passlevel_tree_select/runtime_rms7_ptp7_wav7_tma_clean_${FOLD}_gpu${GPU_ID}"
+    if [[ "${SKIP_FEATURE_BUILD:-0}" != "1" ]]; then
+      "${PYTHON_BIN}" "${PROJECT_ROOT}/feature_extraction/build_rms7_ptp7_wav7.py" \
+        --project_root "${PROJECT_ROOT}" \
+        --runs c1 c4 c6 \
+        --out_dir "dataset/passlevel_tree_select/selected_rms7_ptp7_wav7"
+    fi
+    EXTRA_ARGS=(
+      --train_stride_candidates "1,2"
+      --train_stride_quantiles "0.5"
+      --train_stride_use_monotonic_wear 1
+      --train_stride_policy random
+      --train_stride_random_seed 2026
+    )
+    ;;
+  rms7ptpwav_retrieval)
+    N_VARS=21
+    MODEL_SUFFIX="rms7ptpwav_TMAClean"
+    SELECTED_DIR="${PROJECT_ROOT}/dataset/passlevel_tree_select/selected_rms7_ptp7_wav7"
+    FILE_SUFFIX="rms7_ptp7_wav7"
+    RUNTIME_DIR="${PROJECT_ROOT}/dataset/passlevel_tree_select/runtime_rms7_ptp7_wav7_retrieval_clean_${FOLD}_gpu${GPU_ID}"
+    if [[ "${SKIP_FEATURE_BUILD:-0}" != "1" ]]; then
+      "${PYTHON_BIN}" "${PROJECT_ROOT}/feature_extraction/build_rms7_ptp7_wav7.py" \
+        --project_root "${PROJECT_ROOT}" \
+        --runs c1 c4 c6 \
+        --out_dir "dataset/passlevel_tree_select/selected_rms7_ptp7_wav7"
+    fi
+    EXTRA_ARGS=(
+      --train_stride_candidates "1,2"
+      --train_stride_quantiles "0.5"
+      --train_stride_use_monotonic_wear 1
+      --train_stride_policy random
+      --train_stride_random_seed 2026
+    )
+    ;;
   baseline)
     N_VARS=9
     MODEL_SUFFIX="rms7_plus_feat4_BaselineClean"
@@ -74,6 +210,28 @@ case "${VARIANT}" in
         --out_dir "dataset/passlevel_tree_select/selected_rms7_plus_feat4_plus_se1" \
         --channel_idx 0
     fi
+    EXTRA_ARGS=(
+      --train_stride_candidates "1,2"
+      --train_stride_quantiles "0.5"
+      --train_stride_use_monotonic_wear 1
+      --train_stride_policy random
+      --train_stride_random_seed 2026
+    )
+    ;;
+  f133)
+    N_VARS=134
+    MODEL_SUFFIX="f133B"
+    SELECTED_DIR="${PROJECT_ROOT}/dataset/passlevel_full133_npz"
+    FILE_SUFFIX="full133"
+    RUNTIME_DIR="${PROJECT_ROOT}/dataset/passlevel_tree_select/runtime_f133_${FOLD}_g${GPU_ID}"
+    EXTRA_ARGS=()
+    ;;
+  f133_tma)
+    N_VARS=134
+    MODEL_SUFFIX="f133T"
+    SELECTED_DIR="${PROJECT_ROOT}/dataset/passlevel_full133_npz"
+    FILE_SUFFIX="full133"
+    RUNTIME_DIR="${PROJECT_ROOT}/dataset/passlevel_tree_select/runtime_f133t_${FOLD}_g${GPU_ID}"
     EXTRA_ARGS=(
       --train_stride_candidates "1,2"
       --train_stride_quantiles "0.5"

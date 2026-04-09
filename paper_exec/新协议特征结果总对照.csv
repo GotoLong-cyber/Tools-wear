@@ -1,0 +1,169 @@
+﻿feature_set,dim,epoch,setting,fold,rmse,mae,notes
+pure_rms7,7,200,Baseline,fold1,5.5836,5.2127,head-only
+pure_rms7,7,200,Baseline,fold2,4.8488,4.1546,head-only
+pure_rms7,7,200,Baseline,fold3,5.1337,3.7970,head-only
+pure_rms7,7,200,Baseline,avg,5.1887,4.3881,head-only
+pure_rms7,7,200,TMA,fold1,6.4292,5.7977,head-only
+pure_rms7,7,200,TMA,fold2,4.9371,4.1570,head-only
+pure_rms7,7,200,TMA,fold3,4.1966,3.5394,head-only
+pure_rms7,7,200,TMA,avg,5.1876,4.4981,head-only
+pure_rms7,7,200,TMA+KNN_knn_only,fold1,3.0424,2.6900,delta-knn-only@k5
+pure_rms7,7,200,TMA+KNN_knn_only,fold2,4.7076,4.6059,delta-knn-only@k5
+pure_rms7,7,200,TMA+KNN_knn_only,fold3,3.5913,3.2820,delta-knn-only@k5
+pure_rms7,7,200,TMA+KNN_knn_only,avg,3.7804,3.5260,delta-knn-only@k5
+pure_rms7,7,200,TMA+KNN_blend,fold1,4.4303,4.0788,delta-blend@k5_b05
+pure_rms7,7,200,TMA+KNN_blend,fold2,3.8091,3.1766,delta-blend@k5_b05
+pure_rms7,7,200,TMA+KNN_blend,fold3,3.6591,3.1157,delta-blend@k5_b05
+pure_rms7,7,200,TMA+KNN_blend,avg,3.9662,3.4570,delta-blend@k5_b05
+pure_rms7,7,300,Baseline,fold1,5.0665,4.4243,head-only
+pure_rms7,7,300,Baseline,fold2,6.2884,5.1470,head-only
+pure_rms7,7,300,Baseline,fold3,5.7984,4.3575,head-only
+pure_rms7,7,300,Baseline,avg,5.7178,4.6429,head-only
+pure_rms7,7,300,TMA,fold1,5.9324,5.5669,head-only
+pure_rms7,7,300,TMA,fold2,5.6726,4.9189,head-only
+pure_rms7,7,300,TMA,fold3,5.2238,4.2480,head-only
+pure_rms7,7,300,TMA,avg,5.6096,4.9113,head-only
+pure_rms7,7,300,RetrievalBackbone,fold1,5.9324,5.5669,head-only from retrieval backbone log
+pure_rms7,7,300,RetrievalBackbone,fold2,5.6726,4.9189,head-only from retrieval backbone log
+pure_rms7,7,300,RetrievalBackbone,fold3,5.2238,4.2480,head-only from retrieval backbone log
+pure_rms7,7,300,RetrievalBackbone,avg,5.6096,4.9113,head-only from retrieval backbone log
+full133,133,200,Baseline,fold1,43.8633,29.9033,head-only
+full133,133,200,Baseline,fold2,5.3699,4.1883,head-only
+full133,133,200,Baseline,fold3,5.3054,3.9337,head-only
+full133,133,200,Baseline,avg,18.1796,12.6751,head-only
+full133,133,200,TMA,fold1,43.0307,28.9756,head-only
+full133,133,200,TMA,fold2,4.6115,3.9030,head-only
+full133,133,200,TMA,fold3,4.7317,3.9751,head-only
+full133,133,200,TMA,avg,17.4579,12.2846,head-only
+full133,133,200,KNN_knn_only,fold1,2.5892,2.4228,delta-knn-only@k5
+full133,133,200,KNN_knn_only,fold2,4.5147,4.4112,delta-knn-only@k5
+full133,133,200,KNN_knn_only,fold3,3.7842,3.4423,delta-knn-only@k5
+full133,133,200,KNN_knn_only,avg,3.6294,3.4254,delta-knn-only@k5
+full133,133,200,KNN_blend,fold1,22.9602,16.1288,delta-blend@k5_b05
+full133,133,200,KNN_blend,fold2,4.2468,3.7864,delta-blend@k5_b05
+full133,133,200,KNN_blend,fold3,4.0364,3.2528,delta-blend@k5_b05
+full133,133,200,KNN_blend,avg,10.4144,7.7226,delta-blend@k5_b05
+full133,133,200,TMA+KNN_knn_only,fold1,2.5892,2.4228,delta-knn-only@k5
+full133,133,200,TMA+KNN_knn_only,fold2,4.5164,4.4129,delta-knn-only@k5
+full133,133,200,TMA+KNN_knn_only,fold3,3.7176,3.4032,delta-knn-only@k5
+full133,133,200,TMA+KNN_knn_only,avg,3.6077,3.4130,delta-knn-only@k5
+full133,133,200,TMA+KNN_blend,fold1,22.5322,15.6186,delta-blend@k5_b05
+full133,133,200,TMA+KNN_blend,fold2,3.8673,3.4752,delta-blend@k5_b05
+full133,133,200,TMA+KNN_blend,fold3,3.5218,2.8981,delta-blend@k5_b05
+full133,133,200,TMA+KNN_blend,avg,9.9738,7.3306,delta-blend@k5_b05
+full133,133,300,Baseline,fold1,44.1790,30.1552,head-only
+full133,133,300,Baseline,fold2,6.3221,4.9402,head-only
+full133,133,300,Baseline,fold3,6.2017,4.8904,head-only
+full133,133,300,Baseline,avg,18.9009,13.3286,head-only
+full133,133,300,KNN_knn_only,fold1,2.9122,2.6191,delta-knn-only@k3
+full133,133,300,KNN_knn_only,fold2,2.9661,2.5880,delta-knn-only@k3
+full133,133,300,KNN_knn_only,fold3,3.3813,2.6713,delta-knn-only@k3
+full133,133,300,KNN_knn_only,avg,3.0865,2.6262,delta-knn-only@k3
+full133,133,300,KNN_blend,fold1,2.9122,2.6191,delta-blend@k3_b10
+full133,133,300,KNN_blend,fold2,2.9661,2.5880,delta-blend@k3_b10
+full133,133,300,KNN_blend,fold3,3.3813,2.6713,delta-blend@k3_b10
+full133,133,300,KNN_blend,avg,3.0865,2.6262,delta-blend@k3_b10
+rms7_ptp7,14,200,Baseline,fold1,7.8411,5.3528,head-only
+rms7_ptp7,14,200,Baseline,fold2,5.8455,5.0482,head-only
+rms7_ptp7,14,200,Baseline,fold3,4.4019,3.6138,head-only
+rms7_ptp7,14,200,Baseline,avg,6.0295,4.6716,head-only
+rms7_wav7,14,200,Baseline,fold1,10.0659,6.2435,head-only
+rms7_wav7,14,200,Baseline,fold2,4.7808,4.6214,head-only
+rms7_wav7,14,200,Baseline,fold3,7.5543,6.0646,head-only
+rms7_wav7,14,200,Baseline,avg,7.467,5.6432,head-only
+rms7_ptp7_wav7,21,200,Baseline,fold1,12.4688,8.5399,head-only
+rms7_ptp7_wav7,21,Baseline,fold2,5.1801,4.758,head-only,
+rms7_ptp7_wav7,21,Baseline,fold3,6.8544,5.447,head-only,
+rms7_ptp7_wav7,21,Baseline,avg,8.1677,6.2483,head-only,
+rms7_ptp7_wav7,21,200,TMA,fold1,10.6094,7.1976,head-only
+rms7_ptp7_wav7,21,200,TMA,fold2,5.0962,4.7034,head-only
+rms7_ptp7_wav7,21,200,TMA,fold3,5.026,3.9782,head-only
+rms7_ptp7_wav7,21,200,TMA,avg,6.9105,5.2931,head-only
+rms7_ptp7_wav7,21,200,TMA+KNN_knn_only,fold1,2.9379,2.6119,delta-knn-only@k5
+rms7_ptp7_wav7,21,200,TMA+KNN_knn_only,fold2,4.7091,4.6073,delta-knn-only@k5
+rms7_ptp7_wav7,21,200,TMA+KNN_knn_only,fold3,3.8085,3.5049,delta-knn-only@k5
+rms7_ptp7_wav7,21,200,TMA+KNN_knn_only,avg,3.8185,3.5747,delta-knn-only@k5
+rms7_ptp7_wav7,21,200,TMA+KNN_blend,fold1,4.9437,3.7868,delta-blend@k5_b05
+rms7_ptp7_wav7,21,200,TMA+KNN_blend,fold2,4.7188,4.6554,delta-blend@k5_b05
+rms7_ptp7_wav7,21,200,TMA+KNN_blend,fold3,4.0782,3.5755,delta-blend@k5_b05
+rms7_ptp7_wav7,21,200,TMA+KNN_blend,avg,4.5802,4.0059,delta-blend@k5_b05
+pure_rms7,7,300,TMA+KNN_knn_only,fold1,2.7946,2.4668,delta-knn-only@k3 (selected by inner-LOSO)
+pure_rms7,7,300,TMA+KNN_knn_only,fold2,4.5432,4.4399,delta-knn-only@k3 (selected by inner-LOSO)
+pure_rms7,7,300,TMA+KNN_knn_only,fold3,3.6844,3.3565,delta-knn-only@k3 (selected by inner-LOSO)
+pure_rms7,7,300,TMA+KNN_knn_only,avg,3.6741,3.4211,delta-knn-only@k3 (selected by inner-LOSO)
+pure_rms7,7,300,TMA+KNN_blend,fold1,4.0684,3.8396,delta-blend@k3_b05 (selected by inner-LOSO)
+pure_rms7,7,300,TMA+KNN_blend,fold2,3.8798,3.0113,delta-blend@k3_b05 (selected by inner-LOSO)
+pure_rms7,7,300,TMA+KNN_blend,fold3,4.1607,3.4610,delta-blend@k3_b05 (selected by inner-LOSO)
+pure_rms7,7,300,TMA+KNN_blend,avg,4.0363,3.4373,delta-blend@k3_b05 (selected by inner-LOSO)
+pure_rms7,7,300,TMA+KNN_knn_only_q0,fold1,2.6889,2.3226,"delta-knn-only@k3, late_q=0.0"
+pure_rms7,7,300,TMA+KNN_knn_only_q0,fold2,3.09,2.7296,"delta-knn-only@k3, late_q=0.0"
+pure_rms7,7,300,TMA+KNN_knn_only_q0,fold3,3.2093,2.6175,"delta-knn-only@k3, late_q=0.0"
+pure_rms7,7,300,TMA+KNN_knn_only_q0,avg,2.9961,2.5566,"delta-knn-only@k3, late_q=0.0"
+pure_rms7,7,300,TMA+KNN_blend_q0,fold1,3.9863,3.7592,"delta-blend@k3_b05, late_q=0.0"
+pure_rms7,7,300,TMA+KNN_blend_q0,fold2,3.8439,3.2150,"delta-blend@k3_b05, late_q=0.0"
+pure_rms7,7,300,TMA+KNN_blend_q0,fold3,4.1302,3.3501,"delta-blend@k3_b05, late_q=0.0"
+pure_rms7,7,300,TMA+KNN_blend_q0,avg,3.9868,3.4414,"delta-blend@k3_b05, late_q=0.0"
+pure_rms7,7,300,Baseline+KNN_knn_only_q0,fold1,2.6342,2.2289,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+pure_rms7,7,300,Baseline+KNN_knn_only_q0,fold2,2.9668,2.6133,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+pure_rms7,7,300,Baseline+KNN_knn_only_q0,fold3,3.1348,2.5691,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+pure_rms7,7,300,Baseline+KNN_knn_only_q0,avg,2.9119,2.4704,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+pure_rms7,7,300,Baseline+KNN_blend_q0,fold1,3.0576,2.6248,"delta-blend@k3_b05, late_q=0.0 from baseline checkpoint"
+pure_rms7,7,300,Baseline+KNN_blend_q0,fold2,4.1745,3.3863,"delta-blend@k3_b05, late_q=0.0 from baseline checkpoint"
+pure_rms7,7,300,Baseline+KNN_blend_q0,fold3,4.3192,3.3879,"delta-blend@k3_b05, late_q=0.0 from baseline checkpoint"
+pure_rms7,7,300,Baseline+KNN_blend_q0,avg,3.8504,3.1330,"delta-blend@k3_b05, late_q=0.0 from baseline checkpoint"
+pure_rms7,7,200,Baseline+KNN_knn_only_q0,fold1,2.6935,2.3257,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+pure_rms7,7,200,Baseline+KNN_blend_q0,fold1,3.3493,3.0682,"delta-blend@k3_b05, late_q=0.0 from baseline checkpoint"
+pure_rms7,7,200,Baseline+KNN_knn_only_q0,fold2,2.8732,2.5361,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+pure_rms7,7,200,Baseline+KNN_blend_q0,fold2,3.3881,2.8194,"delta-blend@k3_b05, late_q=0.0 from baseline checkpoint"
+pure_rms7,7,200,Baseline+KNN_knn_only_q0,fold3,3.0947,2.5289,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+pure_rms7,7,200,Baseline+KNN_blend_q0,fold3,3.9773,3.105,"delta-blend@k3_b05, late_q=0.0 from baseline checkpoint"
+pure_rms7,7,200,Baseline+KNN_knn_only_q0,avg,2.8871,2.4635,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+pure_rms7,7,200,Baseline+KNN_blend_q0,avg,3.5716,2.9975,"delta-blend@k3_b05, late_q=0.0 from baseline checkpoint"
+rms7_ptp7,14,300,Baseline,fold1,8.0989,5.4359,head-only
+rms7_ptp7,14,300,Baseline,fold2,6.5984,5.4890,head-only
+rms7_ptp7,14,300,Baseline,fold3,5.4584,4.3856,head-only
+rms7_ptp7,14,300,Baseline,avg,6.7186,5.1035,head-only
+rms7_ptp7,14,300,Baseline+KNN_knn_only_q0,fold1,2.7234,2.3555,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_ptp7,14,300,Baseline+KNN_knn_only_q0,fold2,2.6421,2.2732,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_ptp7,14,300,Baseline+KNN_knn_only_q0,fold3,3.2267,2.6479,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_ptp7,14,300,Baseline+KNN_knn_only_q0,avg,2.8641,2.4255,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_ptp7,14,300,Baseline+KNN_blend_q0,fold1,2.7234,2.3555,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_ptp7,14,300,Baseline+KNN_blend_q0,fold2,2.6421,2.2732,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_ptp7,14,300,Baseline+KNN_blend_q0,fold3,3.2267,2.6479,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_ptp7,14,300,Baseline+KNN_blend_q0,avg,2.8641,2.4255,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_ptp7_wav7,21,300,Baseline,fold1,12.9354,9.2063,head-only
+rms7_ptp7_wav7,21,300,Baseline,fold2,5.7189,5.0984,head-only
+rms7_ptp7_wav7,21,300,Baseline,fold3,7.9546,6.3697,head-only
+rms7_ptp7_wav7,21,300,Baseline,avg,8.8696,6.8915,head-only
+rms7_ptp7_wav7,21,300,Baseline+KNN_knn_only_q0,fold1,2.3728,2.0121,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_ptp7_wav7,21,300,Baseline+KNN_knn_only_q0,fold2,2.9558,2.6595,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_ptp7_wav7,21,300,Baseline+KNN_knn_only_q0,fold3,3.3319,2.8374,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_ptp7_wav7,21,300,Baseline+KNN_knn_only_q0,avg,2.8868,2.5030,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_ptp7_wav7,21,300,Baseline+KNN_blend_q0,fold1,2.3728,2.0121,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_ptp7_wav7,21,300,Baseline+KNN_blend_q0,fold2,2.9558,2.6595,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_ptp7_wav7,21,300,Baseline+KNN_blend_q0,fold3,3.3319,2.8374,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_ptp7_wav7,21,300,Baseline+KNN_blend_q0,avg,2.8868,2.5030,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_ptp7,14,200,Baseline+KNN_knn_only_q0,fold1,2.7017,2.3405,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_ptp7,14,200,Baseline+KNN_knn_only_q0,fold2,2.5591,2.2228,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_ptp7,14,200,Baseline+KNN_knn_only_q0,fold3,3.1604,2.5847,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_ptp7,14,200,Baseline+KNN_knn_only_q0,avg,2.8070,2.3827,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_ptp7,14,200,Baseline+KNN_blend_q0,fold1,2.7017,2.3405,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_ptp7,14,200,Baseline+KNN_blend_q0,fold2,2.5591,2.2228,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_ptp7,14,200,Baseline+KNN_blend_q0,fold3,3.1604,2.5847,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_ptp7,14,200,Baseline+KNN_blend_q0,avg,2.8070,2.3827,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_wav7,14,200,Baseline+KNN_knn_only_q0,fold1,2.7784,2.4306,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_wav7,14,200,Baseline+KNN_knn_only_q0,fold2,2.9061,2.6661,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_wav7,14,200,Baseline+KNN_knn_only_q0,fold3,3.2696,2.7703,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_wav7,14,200,Baseline+KNN_knn_only_q0,avg,2.9847,2.6223,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_wav7,14,200,Baseline+KNN_blend_q0,fold1,2.7784,2.4306,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_wav7,14,200,Baseline+KNN_blend_q0,fold2,2.9061,2.6661,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_wav7,14,200,Baseline+KNN_blend_q0,fold3,3.2696,2.7703,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_wav7,14,200,Baseline+KNN_blend_q0,avg,2.9847,2.6223,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_ptp7_wav7,21,200,Baseline+KNN_knn_only_q0,fold1,2.6225,2.2772,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_ptp7_wav7,21,200,Baseline+KNN_knn_only_q0,fold2,2.8439,2.5557,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_ptp7_wav7,21,200,Baseline+KNN_knn_only_q0,fold3,3.2632,2.7783,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_ptp7_wav7,21,200,Baseline+KNN_knn_only_q0,avg,2.9098,2.5371,"delta-knn-only@k3, late_q=0.0 from baseline checkpoint"
+rms7_ptp7_wav7,21,200,Baseline+KNN_blend_q0,fold1,2.6225,2.2772,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_ptp7_wav7,21,200,Baseline+KNN_blend_q0,fold2,2.8439,2.5557,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_ptp7_wav7,21,200,Baseline+KNN_blend_q0,fold3,3.2632,2.7783,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"
+rms7_ptp7_wav7,21,200,Baseline+KNN_blend_q0,avg,2.9098,2.5371,"delta-blend@k3_b10, late_q=0.0 from baseline checkpoint"

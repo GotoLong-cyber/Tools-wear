@@ -155,6 +155,7 @@ def main() -> None:
     parser.add_argument("--wear_agg", type=str, default="max", choices=["max", "mean"])
     parser.add_argument("--split_ratio", type=float, default=0.8)
     parser.add_argument("--time_gap", type=int, default=0)
+    parser.add_argument("--n_vars", type=int, default=10)
     args = parser.parse_args()
 
     project_root = args.project_root.resolve()
@@ -176,6 +177,7 @@ def main() -> None:
         wear_agg=args.wear_agg,
         split_ratio=args.split_ratio,
         time_gap=args.time_gap,
+        n_vars=args.n_vars,
     )
     cfg.train_runs = str(args.train_runs)
     cfg.test_runs = str(args.test_runs)

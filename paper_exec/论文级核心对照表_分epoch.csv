@@ -1,0 +1,42 @@
+﻿Epoch,Method (模型方法),特征,损失函数,C1,C1,C4,C4,C6,C6,Avg,Avg,Note (备注)
+,,,,MAE,RMSE,MAE,RMSE,MAE,RMSE,MAE,RMSE,
+200,Head-only,"RMS-7 (7D), epoch=200",MSE(wear) + λ_m L_mono + λ_s L_smooth,4.1546,4.8488,3.7970,5.1337,5.2127,5.5836,4.3881,5.1887,7通道RMS
+,TMA,"RMS-7 (7D), epoch=200",MSE(wear) + λ_m L_mono + λ_s L_smooth,4.1570,4.9371,3.5394,4.1966,5.7977,6.4292,4.4980,5.1876,7通道RMS
+,KNN,"RMS-7 (7D), epoch=200",MSE(wear) + λ_m L_mono + λ_s L_smooth,2.5361,2.8732,2.5289,3.0947,2.3257,2.6935,2.4636,2.8871,7通道RMS
+,blend,"RMS-7 (7D), epoch=200",MSE(wear) + λ_m L_mono + λ_s L_smooth,2.8194,3.3881,3.105,3.9773,3.0682,3.3493,2.9975,3.5716,7通道RMS
+,KNN+TMA,"RMS-7 (7D), epoch=200",MSE(wear) + λ_m L_mono + λ_s L_smooth,4.6059,4.7076,3.2820,3.5913,2.6900,3.0424,3.5260,3.7804,7通道RMS
+,KNN+TMA+blend,"RMS-7 (7D), epoch=200",MSE(wear) + λ_m L_mono + λ_s L_smooth,3.1766,3.8091,3.1157,3.6591,4.0788,4.4303,3.4570,3.9662,7通道RMS
+,Head-only,RMS-7 + PTP-7 (14D),MSE(wear) + λ_m L_mono + λ_s L_smooth,5.0482,5.8455,3.6138,4.4019,5.3528,7.8411,4.6716,6.0295,7通道RMS + 7通道PTP
+,KNN,RMS-7 + PTP-7 (14D),MSE(wear) + λ_m L_mono + λ_s L_smooth,2.2228,2.5591,2.5847,3.1604,2.3405,2.7017,2.3827,2.8071,7通道RMS + 7通道PTP
+,blend,RMS-7 + PTP-7 (14D),MSE(wear) + λ_m L_mono + λ_s L_smooth,2.2228,2.5591,2.5847,3.1604,2.3405,2.7017,2.3827,2.8071,7通道RMS + 7通道PTP
+,Head-only,RMS-7 + WaveletEnergy-7 (14D),MSE(wear) + λ_m L_mono + λ_s L_smooth,4.6214,4.7808,6.0646,7.5543,6.2435,10.0659,5.6432,7.4670,7通道RMS + 7通道小波能量
+,KNN,RMS-7 + WaveletEnergy-7 (14D),MSE(wear) + λ_m L_mono + λ_s L_smooth,2.6661,2.9061,2.7703,3.2696,2.4306,2.7784,2.6223,2.9847,7通道RMS + 7通道小波能量
+,blend,RMS-7 + WaveletEnergy-7 (14D),MSE(wear) + λ_m L_mono + λ_s L_smooth,2.6661,2.9061,2.7703,3.2696,2.4306,2.7784,2.6223,2.9847,7通道RMS + 7通道小波能量
+,Head-only,RMS-7 + PTP-7 + WaveletEnergy-7 (21D),MSE(wear) + λ_m L_mono + λ_s L_smooth,4.758,5.1801,5.447,6.8544,8.5399,12.4688,6.2483,8.1678,7通道RMS + 7通道PTP + 7通道小波能量
+,TMA,RMS-7 + PTP-7 + WaveletEnergy-7 (21D),MSE(wear) + λ_m L_mono + λ_s L_smooth,4.7034,5.0962,3.9782,5.026,7.1976,10.6094,5.2931,6.9105,7通道RMS + 7通道PTP + 7通道小波能量
+,KNN,RMS-7 + PTP-7 + WaveletEnergy-7 (21D),MSE(wear) + λ_m L_mono + λ_s L_smooth,2.5557,2.8439,2.7783,3.2632,2.2772,2.6225,2.5371,2.9099,7通道RMS + 7通道PTP + 7通道小波能量
+,blend,RMS-7 + PTP-7 + WaveletEnergy-7 (21D),MSE(wear) + λ_m L_mono + λ_s L_smooth,2.5557,2.8439,2.7783,3.2632,2.2772,2.6225,2.5371,2.9099,7通道RMS + 7通道PTP + 7通道小波能量
+,KNN+TMA,RMS-7 + PTP-7 + WaveletEnergy-7 (21D),MSE(wear) + λ_m L_mono + λ_s L_smooth,4.6073,4.7091,3.5049,3.8085,2.6119,2.9379,3.5747,3.8185,7通道RMS + 7通道PTP + 7通道小波能量
+,KNN+TMA+blend,RMS-7 + PTP-7 + WaveletEnergy-7 (21D),MSE(wear) + λ_m L_mono + λ_s L_smooth,4.6554,4.7188,3.5755,4.0782,3.7868,4.9437,4.0059,4.5802,7通道RMS + 7通道PTP + 7通道小波能量
+,Head-only,Full-133 (133D),MSE(wear) + λ_m L_mono + λ_s L_smooth,4.1883,5.3699,3.9337,5.3054,29.9033,43.8633,12.6751,18.1795,7通道×19统计特征（时域+频域）
+,TMA,Full-133 (133D),MSE(wear) + λ_m L_mono + λ_s L_smooth,3.9030,4.6115,3.9751,4.7317,28.9756,43.0307,12.2846,17.4580,7通道×19统计特征（时域+频域）
+,KNN,Full-133 (133D),MSE(wear) + λ_m L_mono + λ_s L_smooth,4.4112,4.5147,3.4423,3.7842,2.4228,2.5892,3.4254,3.6294,7通道×19统计特征（时域+频域）
+,blend,Full-133 (133D),MSE(wear) + λ_m L_mono + λ_s L_smooth,3.7864,4.2468,3.2528,4.0364,16.1288,22.9602,7.7227,10.4145,7通道×19统计特征（时域+频域）
+,KNN+TMA,Full-133 (133D),MSE(wear) + λ_m L_mono + λ_s L_smooth,4.4129,4.5164,3.4032,3.7176,2.4228,2.5892,3.4130,3.6077,7通道×19统计特征（时域+频域）
+,KNN+TMA+blend,Full-133 (133D),MSE(wear) + λ_m L_mono + λ_s L_smooth,3.4752,3.8673,2.8981,3.5218,15.6186,22.5322,7.3306,9.9738,7通道×19统计特征（时域+频域）
+,,,,,,,,,,,,
+300,Head-only,"RMS-7 (7D), epoch=300",MSE(wear) + λ_m L_mono + λ_s L_smooth,5.1470,6.2884,4.3575,5.7984,4.4243,5.0665,4.6429,5.7178,7通道RMS
+,TMA,"RMS-7 (7D), epoch=300",MSE(wear) + λ_m L_mono + λ_s L_smooth,4.9189,5.6726,4.2480,5.2238,5.5669,5.9324,4.9113,5.6096,7通道RMS
+,KNN,"RMS-7 (7D), epoch=300",MSE(wear) + λ_m L_mono + λ_s L_smooth,2.6133,2.9668,2.5691,3.1348,2.2289,2.6342,2.4704,2.9119,7通道RMS
+,blend,"RMS-7 (7D), epoch=300",MSE(wear) + λ_m L_mono + λ_s L_smooth,3.3863,4.1745,3.3879,4.3192,2.6248,3.0576,3.1330,3.8504,7通道RMS
+,KNN+TMA,"RMS-7 (7D), epoch=300",MSE(wear) + λ_m L_mono + λ_s L_smooth,2.7296,3.09,2.6175,3.2093,2.3226,2.6889,2.5566,2.9961,7通道RMS
+,KNN+TMA+blend,"RMS-7 (7D), epoch=300",MSE(wear) + λ_m L_mono + λ_s L_smooth,3.2150,3.8439,3.3501,4.1302,3.7592,3.9863,3.4414,3.9868,7通道RMS
+,Head-only,RMS-7 + PTP-7 (14D),MSE(wear) + λ_m L_mono + λ_s L_smooth,5.4890,6.5984,4.3856,5.4584,5.4359,8.0989,5.1035,6.7186,7通道RMS + 7通道PTP
+,KNN,RMS-7 + PTP-7 (14D),MSE(wear) + λ_m L_mono + λ_s L_smooth,2.2732,2.6421,2.6479,3.2267,2.3555,2.7234,2.4255,2.8641,7通道RMS + 7通道PTP
+,blend,RMS-7 + PTP-7 (14D),MSE(wear) + λ_m L_mono + λ_s L_smooth,2.2732,2.6421,2.6479,3.2267,2.3555,2.7234,2.4255,2.8641,7通道RMS + 7通道PTP
+,Head-only,RMS-7 + PTP-7 + WaveletEnergy-7 (21D),MSE(wear) + λ_m L_mono + λ_s L_smooth,5.0984,5.7189,6.3697,7.9546,9.2063,12.9354,6.8915,8.8696,7通道RMS + 7通道PTP + 7通道小波能量
+,KNN,RMS-7 + PTP-7 + WaveletEnergy-7 (21D),MSE(wear) + λ_m L_mono + λ_s L_smooth,2.6595,2.9558,2.8374,3.3319,2.0121,2.3728,2.5030,2.8868,7通道RMS + 7通道PTP + 7通道小波能量
+,blend,RMS-7 + PTP-7 + WaveletEnergy-7 (21D),MSE(wear) + λ_m L_mono + λ_s L_smooth,2.6595,2.9558,2.8374,3.3319,2.0121,2.3728,2.5030,2.8868,7通道RMS + 7通道PTP + 7通道小波能量
+,Head-only,Full-133 (133D),MSE(wear) + λ_m L_mono + λ_s L_smooth,4.9402,6.3221,4.8904,6.2017,30.1552,44.1790,13.3286,18.9009,7通道×19统计特征（时域+频域）
+,KNN,Full-133 (133D),MSE(wear) + λ_m L_mono + λ_s L_smooth,2.5880,2.9661,2.6713,3.3813,2.6191,2.9122,2.6261,3.0865,7通道×19统计特征（时域+频域）
+,blend,Full-133 (133D),MSE(wear) + λ_m L_mono + λ_s L_smooth,2.5880,2.9661,2.6713,3.3813,2.6191,2.9122,2.6261,3.0865,7通道×19统计特征（时域+频域）
